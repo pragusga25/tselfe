@@ -1,22 +1,13 @@
-// import { apiPrivate } from '@/api';
-// import { useAuth } from '@/hooks';
 import { AxiosError } from 'axios';
 import toast from 'react-hot-toast';
 
 export const handleError = async (error: Error) => {
-  // const { setAuth } = useAuth();
   if (error instanceof AxiosError) {
     const { response } = error;
-    // if (response?.data.error?.code === 'auth/access-token-expired') {
-    //   const response = await apiPrivate.get('/auth.refresh');
-    //   setAuth((prev) => {
-    //     return {
-    //       ...prev,
-    //       accessToken: response.data.result.accessToken,
-    //       user: response.data.result.user,
-    //     };
-    //   });
-    // }
+    if (response?.data.error?.code === 'auth/access-token-expired') {
+      return window.location.reload();
+    }
+
     toast.error(
       response?.data?.error?.details?.[0] ??
         response?.data.error?.code ??

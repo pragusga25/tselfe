@@ -9,6 +9,7 @@ import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
 import { ChangeEvent, FormEvent, useState } from 'react';
 import { CreateUserPayload, PrincipalType, Role } from '@/types';
+import { formatDate } from '@/lib/utils';
 
 export const Accounts = () => {
   const { data } = useListUsers();
@@ -17,6 +18,10 @@ export const Accounts = () => {
   } = useAuth();
 
   const [role, setRole] = useState<Role>(Role.USER);
+
+  const { mutate, isPending, isSuccess } = useCreateUser();
+  const { mutate: deleteUser, isPending: isDeleting } = useDeleteUsers();
+  const { data: principals } = useListPrincipals();
   const [payload, setPayload] = useState<Omit<CreateUserPayload, 'role'>>({
     name: '',
     username: '',
@@ -25,9 +30,6 @@ export const Accounts = () => {
     principalType: PrincipalType.GROUP,
   });
 
-  const { mutate, isPending, isSuccess } = useCreateUser();
-  const { mutate: deleteUser, isPending: isDeleting } = useDeleteUsers();
-  const { data: principals } = useListPrincipals();
   const filteredPrincipals = principals?.filter(
     (p) => p.principalType === payload.principalType
   );
@@ -169,6 +171,9 @@ export const Accounts = () => {
                       name="principalId"
                       onChange={onChange}
                     >
+                      <option value="" disabled hidden key="default">
+                        Select principal
+                      </option>
                       {filteredPrincipals?.map((p) => (
                         <option value={p.id} key={p.id}>
                           {p.displayName} ({p.id})
@@ -218,8 +223,8 @@ export const Accounts = () => {
                 <td>{usr.role}</td>
                 <td>{usr.principalId}</td>
                 <td>{usr.principalType}</td>
-                <td>{new Date(usr.updatedAt).toLocaleString()}</td>
-                <td>{new Date(usr.createdAt).toLocaleString()}</td>
+                <td>{formatDate(usr.updatedAt)}</td>
+                <td>{formatDate(usr.createdAt)}</td>
                 <td>
                   <button
                     className="btn btn-secondary"
