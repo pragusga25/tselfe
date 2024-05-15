@@ -1,10 +1,11 @@
 import { apiPrivate } from '@/api';
 import { AxiosError } from 'axios';
-import { useLogout, useAuth } from '@/hooks';
+import { useAuth } from '@/hooks';
+// import { useLogout, useAuth } from '@/hooks';
 
 export const useRefreshToken = () => {
   const { setAuth, setIsLoading } = useAuth();
-  const logout = useLogout();
+  // const logout = useLogout();
 
   const refresh = async () => {
     try {
