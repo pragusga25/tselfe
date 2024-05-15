@@ -17,18 +17,19 @@ export const useRefreshToken = () => {
           user: response.data.result.user,
         };
       });
-
+      setIsLoading(false);
       return response.data.result.accessToken;
     } catch (error) {
+      console.error(error);
       if (error instanceof AxiosError) {
         if (
           error.response?.status === 401 &&
           error.response.data?.error?.code === 'auth/refresh-token-expired'
         ) {
-          await logout();
+          // await logout();
+          console.log('error.response: ', error.response);
         }
       }
-    } finally {
       setIsLoading(false);
     }
   };
