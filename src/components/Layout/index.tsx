@@ -7,7 +7,7 @@ export const Layout = () => {
   const { isLoggedIn, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isLoggedIn && !isLoading) {
       window.location.replace('/login');
     }
   }, [isLoggedIn]);
