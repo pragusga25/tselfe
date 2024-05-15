@@ -14,6 +14,11 @@ const queryClient = new QueryClient({
     queries: {
       retry: false,
       staleTime: Infinity,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchIntervalInBackground: false,
+      refetchInterval: false,
     },
     mutations: {
       onError: handleError,

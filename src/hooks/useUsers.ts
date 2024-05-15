@@ -6,11 +6,14 @@ import {
   getMe,
   listUsers,
   updateUserPassword,
+  updateUserPrincipal,
 } from '@/api';
 import {
   CreateUserPayload,
   DeleteUsersPayload,
+  PrincipalType,
   UpdateUserPasswordPayload,
+  UpdateUserPrincipalPayload,
 } from '@/types';
 import toast from 'react-hot-toast';
 import { ChangeEvent, FormEvent, useState } from 'react';
@@ -37,9 +40,12 @@ export const useCreateUser = () => {
   const mutation = useMutation({
     mutationKey: ['users.create'],
     mutationFn: (payload: CreateUserPayload) =>
-      createUser(payload, accessToken),
+      toast.promise(createUser(payload, accessToken), {
+        loading: 'Creating user...',
+        success: 'User created successfully',
+        error: 'Error creating user',
+      }),
     onSuccess: async () => {
-      toast.success('User created successfully');
       await queryClient.invalidateQueries({
         queryKey: ['users.list'],
       });
@@ -58,9 +64,12 @@ export const useDeleteUsers = () => {
   const mutation = useMutation({
     mutationKey: ['users.delete'],
     mutationFn: (payload: DeleteUsersPayload) =>
-      deleteUsers(payload, accessToken),
+      toast.promise(deleteUsers(payload, accessToken), {
+        loading: 'Deleting user...',
+        success: 'User deleted successfully',
+        error: 'Error deleting user',
+      }),
     onSuccess: async () => {
-      toast.success('User deleted successfully');
       await queryClient.invalidateQueries({
         queryKey: ['users.list'],
       });
@@ -78,6 +87,7 @@ export const useMe = () => {
   const query = useQuery({
     queryKey: ['users.me'],
     queryFn: () => getMe(accessToken),
+    enabled: !!accessToken,
   });
 
   return query;
@@ -91,10 +101,11 @@ export const useUpdateUserPassword = () => {
   const mutation = useMutation({
     mutationKey: ['users.password.update'],
     mutationFn: (payload: UpdateUserPasswordPayload) =>
-      updateUserPassword(payload, accessToken),
-    onSuccess: async () => {
-      toast.success('Password updated successfully');
-    },
+      toast.promise(updateUserPassword(payload, accessToken), {
+        loading: 'Updating password...',
+        success: 'Password updated successfully',
+        error: 'Error updating password',
+      }),
   });
 
   const {
@@ -134,5 +145,49 @@ export const useUpdateUserPassword = () => {
     onSubmitPassword,
     isUpdatingPassword,
     isPasswordUpdated,
+  };
+};
+
+export const useUpdateUserPrincipal = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationKey: ['users.principal.update'],
+    mutationFn: (payload: UpdateUserPrincipalPayload) =>
+      toast.promise(updateUserPrincipal(payload, accessToken), {
+        loading: 'Updating principal...',
+        success: 'Principal updated successfully',
+        error: 'Error updating principal',
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['users.list'],
+      });
+    },
+  });
+
+  const {
+    isPending: isUpdatingPrincipal,
+    isSuccess: isPrincipalUpdated,
+    mutate,
+  } = mutation;
+
+  const [principalPayload, setPrincipalPayloadPayload] =
+    useState<UpdateUserPrincipalPayload>({
+      userId: '',
+      principalId: '',
+      principalType: PrincipalType.GROUP,
+    });
+
+  return {
+    mutation,
+    principalPayload,
+    setPrincipalPayloadPayload,
+    isUpdatingPrincipal,
+    isPrincipalUpdated,
+    mutate,
   };
 };

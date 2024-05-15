@@ -27,13 +27,16 @@ export const useUpsertIdentityInstance = () => {
 
   const mutation = useMutation({
     mutationFn: (data: UpsertIdentityInstancePayload) =>
-      upsertIdentityInstance(data, accessToken),
+      toast.promise(upsertIdentityInstance(data, accessToken), {
+        loading: 'Upserting identity instance...',
+        success: 'Identity instance upserted successfully',
+        error: 'Error upserting identity instance',
+      }),
     mutationKey: ['identity-instance.upsert'],
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['identity-instance.list'],
       });
-      toast.success('Identity instance upserted successfully');
     },
   });
 

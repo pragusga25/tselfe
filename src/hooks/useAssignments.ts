@@ -1,11 +1,16 @@
 import {
   acceptAssignmentRequests,
+  countAssignmentRequests,
+  createAssignment,
+  deleteAssignment,
   deleteAssignmentRequests,
+  editAssignment,
   listAssignmentRequests,
   listAssignments,
   listMyAssignmentRequests,
   pullAssignments,
   pushAssignments,
+  pushOneAssignment,
   rejectAssignmentRequests,
   requestAssignment,
 } from '@/api';
@@ -14,18 +19,25 @@ import { useAuth } from './useAuth';
 import toast from 'react-hot-toast';
 import {
   AcceptAssignmentRequestsPayload,
+  CreateAssignmentPayload,
+  DeleteAssignmentPayload,
   DeleteAssignmentRequestsPayload,
+  EditAssignmentPayload,
+  PushOneAssignmentPayload,
   RejectAssignmentRequestsPayload,
   RequestAssignmentPayload,
+  RequestAssignmentStatus,
+  Role,
 } from '@/types';
 
 export const useListAssignments = () => {
   const {
-    auth: { accessToken },
+    auth: { accessToken, user },
   } = useAuth();
   const query = useQuery({
     queryKey: ['assignments.list'],
     queryFn: () => listAssignments(accessToken),
+    enabled: user?.role === Role.ADMIN,
   });
 
   return query;
@@ -37,13 +49,17 @@ export const usePullAssignments = () => {
     auth: { accessToken },
   } = useAuth();
   const mutation = useMutation({
-    mutationFn: () => pullAssignments(accessToken),
+    mutationFn: () =>
+      toast.promise(pullAssignments(accessToken), {
+        loading: 'Pulling assignments...',
+        success: 'Assignments pulled successfully',
+        error: 'Error pulling assignments',
+      }),
     mutationKey: ['assignments.pull'],
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['assignments.list'],
       });
-      toast.success('Assignments pulled successfully');
     },
   });
 
@@ -55,10 +71,58 @@ export const usePushAssignments = () => {
     auth: { accessToken },
   } = useAuth();
   const mutation = useMutation({
-    mutationFn: () => pushAssignments(accessToken),
+    mutationFn: () =>
+      toast.promise(pushAssignments(accessToken), {
+        loading: 'Pushing assignments...',
+        success: 'Assignments pushed successfully',
+        error: 'Error pushing assignments',
+      }),
+    mutationKey: ['assignments.push'],
+  });
+
+  return mutation;
+};
+
+export const useEditAssignment = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+  const mutation = useMutation({
+    mutationFn: (data: EditAssignmentPayload) =>
+      toast.promise(editAssignment(data, accessToken), {
+        loading: 'Editing assignment...',
+        success: 'Assignments edited successfully',
+        error: 'Error editing assignment',
+      }),
+    mutationKey: ['assignments.edit'],
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['assignments.list'],
+      });
+    },
+  });
+
+  return mutation;
+};
+
+export const usePushOneAssignment = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+  const mutation = useMutation({
+    mutationFn: (data: PushOneAssignmentPayload) =>
+      toast.promise(pushOneAssignment(data, accessToken), {
+        loading: 'Pushing assignment...',
+        success: 'Assignment pushed successfully',
+        error: 'Error pushing assignment',
+      }),
     mutationKey: ['assignments.push'],
     onSuccess: async () => {
-      toast.success('Assignments pushed successfully');
+      await queryClient.invalidateQueries({
+        queryKey: ['assignments.list'],
+      });
     },
   });
 
@@ -111,6 +175,25 @@ export const useListAssignmentRequests = (enabled = true) => {
   return query;
 };
 
+export const useCountAssignmentRequests = () => {
+  const {
+    auth: { accessToken, user },
+  } = useAuth();
+  const query = useQuery({
+    queryKey: ['assignment-requests.count'],
+    queryFn: () =>
+      countAssignmentRequests(
+        {
+          status: RequestAssignmentStatus.PENDING,
+        },
+        accessToken
+      ),
+    enabled: user?.role === Role.ADMIN,
+  });
+
+  return query;
+};
+
 export const useAcceptAssignmentRequests = () => {
   const queryClient = useQueryClient();
   const {
@@ -118,13 +201,19 @@ export const useAcceptAssignmentRequests = () => {
   } = useAuth();
   const mutation = useMutation({
     mutationFn: (data: AcceptAssignmentRequestsPayload) =>
-      acceptAssignmentRequests(data, accessToken),
+      toast.promise(acceptAssignmentRequests(data, accessToken), {
+        loading: 'Accepting assignment requests...',
+        success: 'Assignment requests accepted successfully',
+        error: 'Error accepting assignment requests',
+      }),
     mutationKey: ['assignment-requests.accept'],
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['assignment-requests.list'],
       });
-      toast.success('Assignment requests accepted successfully');
+      await queryClient.invalidateQueries({
+        queryKey: ['assignment-requests.count'],
+      });
     },
   });
 
@@ -140,13 +229,19 @@ export const useRejectAssignmentRequests = () => {
 
   const mutation = useMutation({
     mutationFn: (data: RejectAssignmentRequestsPayload) =>
-      rejectAssignmentRequests(data, accessToken),
+      toast.promise(rejectAssignmentRequests(data, accessToken), {
+        loading: 'Rejecting assignment requests...',
+        success: 'Assignment requests rejected successfully',
+        error: 'Error rejecting assignment requests',
+      }),
     mutationKey: ['assignment-requests.reject'],
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['assignment-requests.list'],
       });
-      toast.success('Assignment requests rejected successfully');
+      await queryClient.invalidateQueries({
+        queryKey: ['assignment-requests.count'],
+      });
     },
   });
 
@@ -162,7 +257,11 @@ export const useDeleteAssignmentRequests = () => {
 
   const mutation = useMutation({
     mutationFn: (data: DeleteAssignmentRequestsPayload) =>
-      deleteAssignmentRequests(data, accessToken),
+      toast.promise(deleteAssignmentRequests(data, accessToken), {
+        loading: 'Deleting assignment requests...',
+        success: 'Assignment requests deleted successfully',
+        error: 'Error deleting assignment requests',
+      }),
     mutationKey: ['assignment-requests.delete'],
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -171,7 +270,62 @@ export const useDeleteAssignmentRequests = () => {
       await queryClient.invalidateQueries({
         queryKey: ['assignment-requests.list'],
       });
-      toast.success('Assignment requests deleted successfully');
+    },
+  });
+
+  return mutation;
+};
+
+export const useDeleteAssignment = () => {
+  const queryClient = useQueryClient();
+
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationFn: (data: DeleteAssignmentPayload) =>
+      toast.promise(deleteAssignment(data, accessToken), {
+        loading: 'Deleting assignment ...',
+        success: 'Assignment deleted successfully',
+        error: 'Error deleting assignment ',
+      }),
+    mutationKey: ['assignments.delete'],
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['assignments.list'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['principals.list-not-in-db'],
+      });
+    },
+  });
+
+  return mutation;
+};
+
+export const useCreateAssignment = () => {
+  const queryClient = useQueryClient();
+
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationFn: (data: CreateAssignmentPayload) =>
+      toast.promise(createAssignment(data, accessToken), {
+        loading: 'Creating assignment ...',
+        success: 'Assignment created successfully',
+        error: 'Error creating assignment ',
+      }),
+    mutationKey: ['assignments.create'],
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['assignments.list'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['principals.list-not-in-db'],
+      });
     },
   });
 

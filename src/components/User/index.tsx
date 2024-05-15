@@ -78,7 +78,7 @@ export const User = () => {
       <section className="border-b-2 pb-4">
         <h2 className="text-2xl font-semibold mb-4">Account</h2>
         <div className="flex flex-col lg:flex-row justify-center items-center lg:justify-between lg:space-x-6">
-          <div className="lg:w-1/2 text-justify border-2 p-4">
+          <div className="w-full max-w-lg lg:w-1/2 text-justify border-2 p-4">
             <p>
               <strong>Name:</strong> {data?.name}
             </p>

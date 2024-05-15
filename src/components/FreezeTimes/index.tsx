@@ -244,6 +244,7 @@ export const FreezeTimes = () => {
               <th>Target</th>
               <th>Start Date</th>
               <th>End Date</th>
+              <th>Status</th>
               <th>Note</th>
               <th>Created At</th>
               <th>Updated At</th>
@@ -251,41 +252,58 @@ export const FreezeTimes = () => {
             </tr>
           </thead>
           <tbody>
-            {data?.map((fz, idx) => (
-              <tr key={fz.id}>
-                <td>{idx + 1}</td>
-                <td>{fz.creator.name}</td>
-                <td>
-                  {fz.permissionSets
-                    .map((ps) => {
-                      if (ps.name) {
-                        return ps.name;
-                      }
+            {data?.map((fz, idx) => {
+              const now = new Date();
+              const startTime = new Date(fz.startTime);
+              const endTime = new Date(fz.endTime);
+              let status = 'PENDING';
 
-                      return ps.arn;
-                    })
-                    .join(', ')}
-                </td>
-                <td>{fz.target}</td>
-                <td>{formatDate(fz.startTime, false)}</td>
-                <td>{formatDate(fz.endTime, false)}</td>
-                <td>{fz.note ?? '-'}</td>
-                <td>{formatDate(fz.createdAt)}</td>
-                <td>{formatDate(fz.updatedAt)}</td>
-                <td>
-                  <button
-                    className="btn btn-md btn-error"
-                    onClick={() => deleteFreezeTimes({ ids: [fz.id] })}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting && (
-                      <span className="loading loading-spinner"></span>
-                    )}
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+              if (now >= startTime && now < endTime) {
+                status = 'ACTIVE';
+              } else if (now > endTime) {
+                status = 'EXPIRED';
+              }
+              return (
+                <tr key={fz.id}>
+                  <td>{idx + 1}</td>
+                  <td>{fz.creator.name}</td>
+                  <td>
+                    {fz.permissionSets
+                      .map((ps) => {
+                        if (ps.name) {
+                          return ps.name;
+                        }
+
+                        return ps.arn;
+                      })
+                      .join(', ')}
+                  </td>
+                  <td>{fz.target}</td>
+                  <td>{formatDate(fz.startTime, false)}</td>
+                  <td>{formatDate(fz.endTime, false)}</td>
+                  <td>
+                    <span className={`badge badge-${status.toLowerCase()}`}>
+                      {status}
+                    </span>
+                  </td>
+                  <td>{fz.note ?? '-'}</td>
+                  <td>{formatDate(fz.createdAt)}</td>
+                  <td>{formatDate(fz.updatedAt)}</td>
+                  <td>
+                    <button
+                      className="btn btn-md btn-error"
+                      onClick={() => deleteFreezeTimes({ ids: [fz.id] })}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting && (
+                        <span className="loading loading-spinner"></span>
+                      )}
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

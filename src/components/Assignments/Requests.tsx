@@ -26,6 +26,8 @@ export const AssignmentRequests = () => {
             <tr>
               <th>No.</th>
               <th>Requester</th>
+              <th>Principal</th>
+              {/* <th>Principal ID</th> */}
               <th>Permission Sets</th>
               <th>Operation</th>
               <th>Note</th>
@@ -54,12 +56,24 @@ export const AssignmentRequests = () => {
               const ableToDelete =
                 req.status !== RequestAssignmentStatus.PENDING;
 
+              const {
+                name,
+                principalDisplayName,
+                username,
+                principalId,
+                principalType,
+              } = req.requester;
+
               return (
                 <tr key={req.id}>
                   <td>{idx + 1}</td>
                   <td>
-                    {req.requester.name} ({req.requester.username})
+                    {name} (@{username})
                   </td>
+                  <td>
+                    {principalDisplayName} ({principalType}) - {principalId}
+                  </td>
+                  {/* <td>{principalId}</td> */}
                   <td>
                     {req.permissionSets
                       .map((ps) => {

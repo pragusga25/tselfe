@@ -1,11 +1,12 @@
-import { useListAssignmentRequests, useLogout, useMe } from '@/hooks';
-import { RequestAssignmentStatus, Role } from '@/types';
+import { useCountAssignmentRequests, useLogout, useMe } from '@/hooks';
+import { Role } from '@/types';
 
 export const Navbar = () => {
   const menuItems = [
     'Assignments',
     'Freezes',
     'Requests',
+    'Principals',
     'Accounts',
     'Settings',
   ];
@@ -13,13 +14,10 @@ export const Navbar = () => {
   const isAdmin = data?.role === Role.ADMIN;
   const logout = useLogout();
 
-  const { data: assignmentRequests } = useListAssignmentRequests(isAdmin);
+  const { data: assignmentRequestsCount } = useCountAssignmentRequests();
+  const count = assignmentRequestsCount?.count ?? 0;
 
-  const hasNotif = assignmentRequests
-    ? assignmentRequests.filter(
-        (req) => req.status === RequestAssignmentStatus.PENDING
-      ).length > 0
-    : 0;
+  const hasNotif = count > 0;
 
   return (
     <nav className="flex items-center min-h-16 p-2 bg-base-100 border-b-2 border-base-200 shadow-lg">
@@ -33,7 +31,9 @@ export const Navbar = () => {
                 className="btn btn-ghost btn-circle relative"
               >
                 {hasNotif && (
-                  <span className="w-2 h-2 bg-red-400 rounded-full absolute top-2 right-2" />
+                  <span className="w-4 h-4 text-xs text-center text-black font-bold bg-red-400 rounded-full absolute top-2 right-2">
+                    {count}
+                  </span>
                 )}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -59,7 +59,9 @@ export const Navbar = () => {
                     <a href={`/${item.toLowerCase()}`} className="menu-item">
                       {item}
                       {hasNotif && item === 'Requests' && (
-                        <span className="w-2 h-2 bg-red-400 rounded-full" />
+                        <span className="w-4 h-4 text-xs text-center text-black font-bold bg-red-400 rounded-full">
+                          {count}
+                        </span>
                       )}
                     </a>
                   </li>

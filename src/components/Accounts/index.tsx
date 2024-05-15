@@ -4,6 +4,7 @@ import {
   useDeleteUsers,
   useListPrincipals,
   useListUsers,
+  useUpdateUserPrincipal,
 } from '@/hooks';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
@@ -18,6 +19,12 @@ export const Accounts = () => {
   } = useAuth();
 
   const [role, setRole] = useState<Role>(Role.USER);
+  const {
+    mutate: updateUserPrincipal,
+    isUpdatingPrincipal,
+    principalPayload,
+    setPrincipalPayloadPayload,
+  } = useUpdateUserPrincipal();
 
   const { mutate, isPending, isSuccess } = useCreateUser();
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUsers();
@@ -33,6 +40,8 @@ export const Accounts = () => {
   const filteredPrincipals = principals?.filter(
     (p) => p.principalType === payload.principalType
   );
+
+  const defaultValueUpdatePrincipal = `${principals?.[0]?.principalType}#${principals?.[0]?.id}`;
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -204,45 +213,163 @@ export const Accounts = () => {
               <th>Username</th>
               <th>Name</th>
               <th>Role</th>
-              <th>Principal Id</th>
-              <th>Principal Type</th>
+              <th>Principal</th>
               <th>Updated At</th>
               <th>Created At</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {data?.map((usr, idx) => (
-              <tr
-                key={usr.id}
-                className={usr.id === user?.id ? 'text-green-600' : ''}
-              >
-                <td>{idx + 1}</td>
-                <td>{usr.username}</td>
-                <td>{usr.name}</td>
-                <td>{usr.role}</td>
-                <td>{usr.principalId}</td>
-                <td>{usr.principalType}</td>
-                <td>{formatDate(usr.updatedAt)}</td>
-                <td>{formatDate(usr.createdAt)}</td>
-                <td>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() =>
-                      deleteUser({
-                        ids: [usr.id],
-                      })
-                    }
-                    disabled={isDeleting}
-                  >
-                    {isDeleting && (
-                      <span className="loading loading-spinner"></span>
+            {data?.map((usr, idx) => {
+              const isUpdating = usr.id === principalPayload.userId;
+              const value = `${principalPayload.principalType}#${principalPayload.principalId}`;
+              return (
+                <tr
+                  key={usr.id}
+                  className={usr.id === user?.id ? 'text-green-600' : ''}
+                >
+                  <td>{idx + 1}</td>
+                  <td>{usr.username}</td>
+                  <td>{usr.name}</td>
+                  <td>{usr.role}</td>
+                  <td>
+                    {isUpdating ? (
+                      <>
+                        <select
+                          value={value}
+                          className="select select-bordered w-full"
+                          name="principal"
+                          defaultValue={defaultValueUpdatePrincipal}
+                          onChange={(e) =>
+                            setPrincipalPayloadPayload((prev) => ({
+                              ...prev,
+                              principalType: (e.target.value.split('#')[0] ??
+                                PrincipalType.GROUP) as PrincipalType,
+                              principalId: e.target.value.split('#')[1] ?? '',
+                            }))
+                          }
+                        >
+                          <option
+                            value=""
+                            disabled
+                            hidden={(principals?.length ?? 0) > 0}
+                            key="default"
+                          >
+                            {principals?.length === 0
+                              ? 'No principals available'
+                              : 'Select principal'}
+                          </option>
+
+                          {principals?.map((p) => (
+                            <option value={p.id} key={p.id}>
+                              {`${p.displayName} (${p.principalType}) - ${p.id}`}
+                            </option>
+                          ))}
+                        </select>
+
+                        <div className="mt-2">
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() =>
+                              setPrincipalPayloadPayload((prev) => ({
+                                ...prev,
+                                userId: '',
+                                principalId: '',
+                              }))
+                            }
+                            disabled={isUpdatingPrincipal}
+                          >
+                            Cancel
+                          </button>
+
+                          {(principals?.length ?? 0) > 0 && (
+                            <button
+                              className="btn btn-primary btn-sm ml-2"
+                              onClick={() => {
+                                {
+                                  updateUserPrincipal({
+                                    userId: usr.id,
+                                    principalId: principalPayload.principalId,
+                                    principalType:
+                                      principalPayload.principalType,
+                                  });
+
+                                  setPrincipalPayloadPayload({
+                                    userId: '',
+                                    principalId: '',
+                                    principalType: PrincipalType.GROUP,
+                                  });
+                                }
+                              }}
+                              disabled={isUpdatingPrincipal}
+                            >
+                              {isUpdatingPrincipal && (
+                                <span className="loading loading-spinner"></span>
+                              )}
+                              Save
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {usr.principalId
+                          ? `
+                          ${usr.principalDisplayName} (${usr.principalType}) - ${usr.principalId}
+                        `
+                          : '-'}
+                      </>
                     )}
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td>{formatDate(usr.updatedAt)}</td>
+                  <td>{formatDate(usr.createdAt)}</td>
+                  <td className="flex flex-col">
+                    <button
+                      className="btn btn-accent btn-sm"
+                      onClick={() => {
+                        if (!isUpdating) {
+                          setPrincipalPayloadPayload((prev) => ({
+                            ...prev,
+                            userId: usr.id,
+                            principalId:
+                              defaultValueUpdatePrincipal.split('#')[1] ?? '',
+                            principalType: defaultValueUpdatePrincipal.split(
+                              '#'
+                            )[0] as PrincipalType,
+                          }));
+                        } else {
+                          setPrincipalPayloadPayload({
+                            userId: '',
+                            principalId: '',
+                            principalType: PrincipalType.GROUP,
+                          });
+                        }
+                      }}
+                      disabled={isUpdatingPrincipal}
+                    >
+                      {isUpdatingPrincipal && (
+                        <span className="loading loading-spinner"></span>
+                      )}
+                      {isUpdating ? 'Cancel' : 'Edit'}
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-sm mt-2"
+                      onClick={() => {
+                        deleteUser({
+                          ids: [usr.id],
+                        });
+                      }}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting && (
+                        <span className="loading loading-spinner"></span>
+                      )}
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

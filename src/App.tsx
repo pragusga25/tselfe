@@ -9,10 +9,17 @@ import { User } from './components/User';
 import { AssignmentRequests } from './components/Assignments/Requests';
 import { FreezeTimes } from './components/FreezeTimes';
 import { Settings } from './components/Settings';
+import { Role } from './types';
+import { Principals } from './components/Principals';
 
 function App() {
   const { data } = useMe();
-  const isAdmin = data?.role === 'ADMIN';
+  let isAdmin = true;
+
+  if (data && data.role === Role.USER) {
+    isAdmin = false;
+  }
+
   return (
     <Routes>
       {isAdmin ? (
@@ -24,6 +31,7 @@ function App() {
             <Route path="/requests" element={<AssignmentRequests />} />
             <Route path="/freezes" element={<FreezeTimes />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/principals" element={<Principals />} />
           </>
         </Route>
       ) : null}

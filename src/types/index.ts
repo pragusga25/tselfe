@@ -50,6 +50,7 @@ export type Assignment = {
   principalDisplayName: string;
   createdAt: string;
   updatedAt: string;
+  lastPushedAt: string | null;
 };
 
 export type User = {
@@ -59,6 +60,7 @@ export type User = {
   role: Role;
   principalId?: string;
   principalType?: PrincipalType;
+  principalDisplayName?: string;
 };
 export interface UserWithTimeStamps extends User {
   createdAt: string;
@@ -77,6 +79,25 @@ export type LoginPayload = {
   password: string;
 };
 export type CreateUserPayload = Omit<UserWithPassword, 'id'>;
+export type CreatePrincipalPayload = {
+  displayName: string;
+  type: PrincipalType;
+  username?: string;
+  givenName?: string;
+  familyName?: string;
+};
+export type UpdatePrincipalPayload = {
+  displayName: string;
+  type: PrincipalType;
+  id: string;
+};
+export type DeletePrincipalPayload = {
+  type: PrincipalType;
+  id: string;
+};
+export type DeletePrincipalData = OkResponse;
+export type UpdatePrincipalData = OkResponse;
+export type CreatePrincipalData = IdResponse;
 export type RequestAssignmentPayload = {
   permissionSets: PermissionSets;
   operation: RequestAssignmentOperation;
@@ -95,7 +116,11 @@ export type RejectAssignmentRequestsPayload = {
 export type DeleteAssignmentRequestsPayload = {
   ids: string[];
 };
+export type DeleteAssignmentPayload = {
+  id: string;
+};
 
+export type DeleteAssignmentData = OkResponse;
 export type RegisterPayload = Omit<UserWithPassword, 'id'>;
 export type RegisterData = IdResponse;
 export type GetUserData = User;
@@ -113,6 +138,11 @@ export type ListPrincipalsData = {
   id: string;
   displayName: string;
   principalType: PrincipalType;
+}[];
+export type ListPrincipalsNotInDbData = {
+  id: string;
+  displayName: string;
+  type: PrincipalType;
 }[];
 export type ListPermissionSetsData = PermissionSets;
 export type ListMyPermissionSetsData = PermissionSets;
@@ -134,8 +164,27 @@ interface AssignmentRequestWithRequesterData extends AssignmentRequestData {
   requester: {
     name: string;
     username: string;
+    principalId: string;
+    principalType: PrincipalType;
+    principalDisplayName: string;
   };
 }
+
+export type CountAssignmentRequestsData = {
+  count: number;
+};
+
+export type CountAssignmentRequestsQuery = {
+  status?: RequestAssignmentStatus;
+};
+
+export type UpdateUserPrincipalPayload = {
+  userId: string;
+  principalId: string;
+  principalType: PrincipalType;
+};
+
+export type UpdateUserPrincipalData = OkResponse;
 
 export type ListAssignmentRequestsData = AssignmentRequestWithRequesterData[];
 export type GetIdentityInstanceData = {
@@ -174,3 +223,18 @@ export type UpdateUserPasswordPayload = {
   newPassword: string;
 };
 export type UpdateUserPasswordData = OkResponse;
+export type EditAssignmentPayload = {
+  permissionSets: PermissionSets;
+  id: string;
+};
+export type EditAssignmentData = OkResponse;
+export type PushOneAssignmentPayload = {
+  id: string;
+};
+export type PushOneAssignmentData = OkResponse;
+export type CreateAssignmentPayload = {
+  permissionSets: PermissionSets;
+  principalId: string;
+  principalType: PrincipalType;
+};
+export type CreateAssignmentData = IdResponse;

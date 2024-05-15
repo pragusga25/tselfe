@@ -1,16 +1,27 @@
 import {
   AcceptAssignmentRequestsData,
   AcceptAssignmentRequestsPayload,
+  CountAssignmentRequestsData,
+  CountAssignmentRequestsQuery,
+  CreateAssignmentData,
+  CreateAssignmentPayload,
   CreateFreezeTimeData,
   CreateFreezeTimePayload,
+  CreatePrincipalData,
+  CreatePrincipalPayload,
   CreateUserData,
   CreateUserPayload,
+  DeleteAssignmentData,
+  DeleteAssignmentPayload,
   DeleteAssignmentRequestsData,
   DeleteAssignmentRequestsPayload,
   DeleteFreezeTimesData,
   DeleteFreezeTimesPayload,
+  DeletePrincipalData,
+  DeletePrincipalPayload,
   DeleteUsersData,
   DeleteUsersPayload,
+  EditAssignmentPayload,
   GetIdentityInstanceData,
   GetUserData,
   ListAssignmentRequestsData,
@@ -20,18 +31,24 @@ import {
   ListMyPermissionSetsData,
   ListPermissionSetsData,
   ListPrincipalsData,
+  ListPrincipalsNotInDbData,
   ListUsersData,
   LoginData,
   LoginPayload,
   OkResponse,
+  PushOneAssignmentPayload,
   RegisterData,
   RegisterPayload,
   RejectAssignmentRequestsData,
   RejectAssignmentRequestsPayload,
   RequestAssignmentData,
   RequestAssignmentPayload,
+  UpdatePrincipalData,
+  UpdatePrincipalPayload,
   UpdateUserPasswordData,
   UpdateUserPasswordPayload,
+  UpdateUserPrincipalData,
+  UpdateUserPrincipalPayload,
   UpsertIdentityInstanceData,
   UpsertIdentityInstancePayload,
 } from '@/types';
@@ -119,6 +136,32 @@ export const pushAssignments = (accessToken?: string): Promise<OkResponse> => {
     .then((res) => res.data);
 };
 
+export const editAssignment = (
+  data: EditAssignmentPayload,
+  accessToken?: string
+): Promise<OkResponse> => {
+  return api
+    .post('/assignments.edit', data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data);
+};
+
+export const pushOneAssignment = (
+  data: PushOneAssignmentPayload,
+  accessToken?: string
+): Promise<OkResponse> => {
+  return api
+    .post('/assignments.push-one', data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data);
+};
+
 export const login = (payload: LoginPayload): Promise<LoginData> =>
   apiPrivate.post('/auth.login', payload).then((res) => res.data.result);
 
@@ -148,6 +191,17 @@ export const listPrincipals = (
 ): Promise<ListPrincipalsData> =>
   api
     .get(`/principals.list`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const listPrincipalsNotInDb = (
+  accessToken?: string
+): Promise<ListPrincipalsNotInDbData> =>
+  api
+    .get(`/principals.list-not-in-db`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -201,6 +255,30 @@ export const requestAssignment = (
     })
     .then((res) => res.data.result);
 
+export const deleteAssignment = (
+  data: DeleteAssignmentPayload,
+  accessToken?: string
+): Promise<DeleteAssignmentData> =>
+  api
+    .post(`/assignments.delete`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const createAssignment = (
+  data: CreateAssignmentPayload,
+  accessToken?: string
+): Promise<CreateAssignmentData> =>
+  api
+    .post(`/assignments.create`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
 export const listMyPermissionSets = (
   accessToken?: string
 ): Promise<ListMyPermissionSetsData> =>
@@ -233,6 +311,20 @@ export const listAssignmentRequests = (
       },
     })
     .then((res) => res.data.result);
+
+export const countAssignmentRequests = (
+  query: CountAssignmentRequestsQuery,
+  accessToken?: string
+): Promise<CountAssignmentRequestsData> => {
+  return api
+    .get(`/assignment-requests.count`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      params: query,
+    })
+    .then((res) => res.data.result);
+};
 
 export const acceptAssignmentRequests = (
   data: AcceptAssignmentRequestsPayload,
@@ -314,7 +406,13 @@ export const getIdentityInstance = (
         Authorization: `Bearer ${accessToken}`,
       },
     })
-    .then((res) => res.data.result);
+    .then((res) => res.data.result)
+    .catch(() => {
+      return {
+        instanceArn: '',
+        identityStoreId: '',
+      };
+    });
 
 export const upsertIdentityInstance = (
   data: UpsertIdentityInstancePayload,
@@ -334,6 +432,54 @@ export const updateUserPassword = (
 ): Promise<UpdateUserPasswordData> =>
   api
     .post(`/users.password.update`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const updateUserPrincipal = (
+  data: UpdateUserPrincipalPayload,
+  accessToken?: string
+): Promise<UpdateUserPrincipalData> =>
+  api
+    .post(`/users.principal.update`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const createPrincipal = (
+  data: CreatePrincipalPayload,
+  accessToken?: string
+): Promise<CreatePrincipalData> =>
+  api
+    .post(`/principals.create`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const updatePrincipal = (
+  data: UpdatePrincipalPayload,
+  accessToken?: string
+): Promise<UpdatePrincipalData> =>
+  api
+    .post(`/principals.update`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const deletePrincipal = (
+  data: DeletePrincipalPayload,
+  accessToken?: string
+): Promise<DeletePrincipalData> =>
+  api
+    .post(`/principals.delete`, data, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

@@ -23,13 +23,16 @@ export const useCreateFreezeTime = () => {
   } = useAuth();
   const mutation = useMutation({
     mutationFn: (data: CreateFreezeTimePayload) =>
-      createFreezeTime(data, accessToken),
+      toast.promise(createFreezeTime(data, accessToken), {
+        loading: 'Creating freeze time...',
+        success: 'Freeze time created successfully',
+        error: 'Error creating freeze time',
+      }),
     mutationKey: ['freeze-times.create'],
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['freeze-times.list'],
       });
-      toast.success('Freeze time created successfully');
     },
   });
 
@@ -43,13 +46,16 @@ export const useDeleteFreezeTimes = () => {
   } = useAuth();
   const mutation = useMutation({
     mutationFn: (data: DeleteFreezeTimesPayload) =>
-      deleteFreezeTimes(data, accessToken),
+      toast.promise(deleteFreezeTimes(data, accessToken), {
+        loading: 'Deleting freeze time...',
+        success: 'Freeze time deleted successfully',
+        error: 'Error deleting freeze time',
+      }),
     mutationKey: ['freeze-times.create'],
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['freeze-times.list'],
       });
-      toast.success('Freeze time deleted successfully');
     },
   });
 
