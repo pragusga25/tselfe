@@ -1,18 +1,18 @@
-import { useAuth } from '@/hooks';
+// import { useAuth } from '@/hooks';
 import { Navbar } from './Navbar';
 import { Outlet } from 'react-router-dom';
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
 
 export const Layout = () => {
-  const { isLoggedIn, isLoading } = useAuth();
+  // const { isLoggedIn, isLoading } = useAuth();
 
-  useEffect(() => {
-    if (!isLoggedIn && !isLoading) {
-      window.location.replace('/login');
-    }
-  }, [isLoggedIn]);
+  // useEffect(() => {
+  //   if (!isLoggedIn && !isLoading) {
+  //     window.location.replace('/login');
+  //   }
+  // }, [isLoggedIn, isLoading]);
 
-  if (isLoading || !isLoggedIn) return null;
+  // if (isLoading || !isLoggedIn) return null;
 
   return (
     <>
