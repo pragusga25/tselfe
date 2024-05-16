@@ -1,11 +1,11 @@
 import { apiPrivate } from '@/api';
 import { AxiosError } from 'axios';
-import { useAuth } from '@/hooks';
-// import { useLogout, useAuth } from '@/hooks';
+// import { useAuth } from '@/hooks';
+import { useLogout, useAuth } from '@/hooks';
 
 export const useRefreshToken = () => {
   const { setAuth, setIsLoading } = useAuth();
-  // const logout = useLogout();
+  const logout = useLogout();
 
   const refresh = async () => {
     try {
@@ -27,7 +27,7 @@ export const useRefreshToken = () => {
           error.response?.status === 401 &&
           error.response.data?.error?.code === 'auth/refresh-token-expired'
         ) {
-          // await logout();
+          await logout();
           console.log('error.response: ', error.response);
         }
       }

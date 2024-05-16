@@ -12,7 +12,7 @@ export const Login = () => {
   return (
     <div className="flex w-screen h-screen justify-center items-center flex-col">
       <form
-        className="flex flex-col gap-4 max-w-sm w-full p-4 bg-base-100 rounded-box shadow-lg"
+        className="flex flex-col gap-4 max-w-sm w-full p-4 bg-base-100 rounded-box shadow-lg border-2 border-red-400"
         onSubmit={(e) => {
           e.preventDefault();
         }}
