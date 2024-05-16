@@ -4,20 +4,25 @@ import { login } from '@/api';
 import { useAuth } from '@/hooks';
 
 export const useLogin = () => {
-  const { setAuth, setIsLoading } = useAuth();
+  const {
+    setAuth,
+    // ,
+
+    // setIsLoading
+  } = useAuth();
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: (payload: LoginPayload) => {
-      setIsLoading(true);
+      // setIsLoading(true);
       return login(payload);
     },
     onSuccess: (data) => {
       setAuth(data);
       queryClient.clear();
       window.location.replace('/');
-      setIsLoading(false);
+      // setIsLoading(false);
     },
   });
 

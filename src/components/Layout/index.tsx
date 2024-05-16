@@ -4,15 +4,30 @@ import { Outlet } from 'react-router-dom';
 import { useEffect } from 'react';
 
 export const Layout = () => {
-  const { isLoggedIn, isLoading } = useAuth();
+  const {
+    isLoggedIn,
+    // isLoading
+  } = useAuth();
 
   useEffect(() => {
-    if (!isLoggedIn && !isLoading) {
+    if (
+      !isLoggedIn
+      // && !isLoading
+    ) {
       window.location.replace('/login');
     }
-  }, [isLoggedIn, isLoading]);
+  }, [
+    isLoggedIn,
 
-  if (isLoading || !isLoggedIn) return null;
+    // isLoading
+  ]);
+
+  if (
+    // isLoading ||
+
+    !isLoggedIn
+  )
+    return null;
 
   return (
     <>

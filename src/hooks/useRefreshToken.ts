@@ -4,12 +4,16 @@ import { AxiosError } from 'axios';
 import { useLogout, useAuth } from '@/hooks';
 
 export const useRefreshToken = () => {
-  const { setAuth, setIsLoading } = useAuth();
+  const {
+    setAuth,
+
+    // , setIsLoading
+  } = useAuth();
   const logout = useLogout();
 
   const refresh = async () => {
     try {
-      setIsLoading(true);
+      // setIsLoading(true);
       const response = await apiPrivate.get('/auth.refresh');
       setAuth((prev) => {
         return {
@@ -18,7 +22,7 @@ export const useRefreshToken = () => {
           user: response.data.result.user,
         };
       });
-      setIsLoading(false);
+      // setIsLoading(false);
       return response.data.result.accessToken;
     } catch (error) {
       console.error(error);
@@ -31,7 +35,7 @@ export const useRefreshToken = () => {
           console.log('error.response: ', error.response);
         }
       }
-      setIsLoading(false);
+      // setIsLoading(false);
     }
   };
   return refresh;

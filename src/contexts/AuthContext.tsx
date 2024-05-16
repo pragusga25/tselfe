@@ -17,28 +17,34 @@ type AuthContextType = {
   auth: Auth;
   setAuth: Dispatch<SetStateAction<Auth>>;
   isLoggedIn: boolean;
-  isLoading: boolean;
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  // isLoading: boolean;
+  // setIsLoading: Dispatch<SetStateAction<boolean>>;
 };
 
 export const AuthContext = createContext<AuthContextType>({
   auth: {},
   setAuth: () => {},
   isLoggedIn: false,
-  isLoading: false,
-  setIsLoading: () => {},
+  // isLoading: false,
+  // setIsLoading: () => {},
 });
 
 export const AuthProvider: FC<{
   children: ReactNode;
 }> = ({ children }) => {
   const [auth, setAuth] = useState<Auth>({});
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
   const isLoggedIn = !!auth.accessToken;
 
   return (
     <AuthContext.Provider
-      value={{ auth, setAuth, isLoggedIn, isLoading, setIsLoading }}
+      value={{
+        auth,
+        setAuth,
+        isLoggedIn,
+
+        // isLoading, setIsLoading
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -3,7 +3,11 @@ import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 
 export const RedirectAuthenticated = () => {
-  const { isLoggedIn, isLoading } = useAuth();
+  const {
+    isLoggedIn,
+
+    // isLoading
+  } = useAuth();
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -11,7 +15,13 @@ export const RedirectAuthenticated = () => {
     }
   }, [isLoggedIn]);
 
-  if (isLoading || isLoggedIn) return null;
+  if (
+    // isLoading
+
+    // ||
+    isLoggedIn
+  )
+    return null;
 
   return <Outlet />;
 };
