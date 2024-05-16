@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useAuth, useRefreshToken } from '@/hooks';
+import { useLocation } from 'react-router-dom';
 
 export const usePersistLogin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const refresh = useRefreshToken();
+  const { pathname } = useLocation();
   const { auth } = useAuth();
 
   useEffect(() => {
     let isMounted = true;
+    const isLogout = pathname.includes('logout');
 
     const verifyRefreshToken = async () => {
       try {
@@ -19,7 +22,9 @@ export const usePersistLogin = () => {
     };
 
     // Avoids unwanted call to verifyRefreshToken
-    !auth?.accessToken ? verifyRefreshToken() : setIsLoading(false);
+    !auth?.accessToken && !isLogout
+      ? verifyRefreshToken()
+      : setIsLoading(false);
 
     return () => {
       isMounted = false;
