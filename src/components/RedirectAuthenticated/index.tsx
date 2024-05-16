@@ -6,7 +6,7 @@ export const RedirectAuthenticated = () => {
   const { isLoggedIn, isLoading } = useAuth();
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && !isLoading) {
       window.location.href = '/';
     }
   }, [isLoggedIn]);

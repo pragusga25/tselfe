@@ -10,7 +10,7 @@ export const usePersistLogin = () => {
 
   useEffect(() => {
     let isMounted = true;
-    const isLogout = pathname.includes('logout');
+    const islogin = pathname.includes('login');
 
     const verifyRefreshToken = async () => {
       try {
@@ -22,9 +22,7 @@ export const usePersistLogin = () => {
     };
 
     // Avoids unwanted call to verifyRefreshToken
-    !auth?.accessToken && !isLogout
-      ? verifyRefreshToken()
-      : setIsLoading(false);
+    !auth?.accessToken && !islogin ? verifyRefreshToken() : setIsLoading(false);
 
     return () => {
       isMounted = false;
