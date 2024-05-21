@@ -4,7 +4,7 @@ import { Assignments } from '@/components/Assignments';
 import { Login } from './components/Login';
 import { RedirectAuthenticated } from './components/RedirectAuthenticated';
 import { Accounts } from './components/Accounts';
-import { useAuth, useMe } from './hooks';
+import { useAuth } from './hooks';
 import { User } from './components/User';
 import { AssignmentRequests } from './components/Assignments/Requests';
 import { FreezeTimes } from './components/FreezeTimes';

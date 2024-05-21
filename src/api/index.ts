@@ -31,7 +31,6 @@ import {
   DeleteUsersPayload,
   EditAssignmentPayload,
   GetIdentityInstanceData,
-  GetUserData,
   ListAccountAdminsData,
   ListAccountUsersData,
   ListAssignmentGroupsData,
