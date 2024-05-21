@@ -1,7 +1,7 @@
 import { useCreateAccountAdmin } from '@/hooks';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
-import { ChangeEvent, FormEvent, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { CreateAccountAdminPayload } from '@/types';
 
 export const AccountAdminModal = () => {
@@ -28,6 +28,12 @@ export const AccountAdminModal = () => {
       [name]: value,
     }));
   };
+
+  useEffect(() => {
+    if (isSuccess) {
+      setPayload(initCreatePayload);
+    }
+  }, [isSuccess]);
 
   return (
     <>
