@@ -11,11 +11,11 @@ import {
   FreezeTimeTarget,
   PermissionSets,
 } from '@/types';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { formatDate } from '@/lib/utils';
 
 export const FreezeTimes = () => {
-  const { data } = useListFreezeTimes();
+  const { data, isLoading } = useListFreezeTimes();
 
   const { data: permissionSets } = useListPermissionSets();
   const {
@@ -43,28 +43,16 @@ export const FreezeTimes = () => {
     endTime: tomorrowDate.toISOString().split('T')[0],
     note: '',
     startTime: new Date().toISOString().split('T')[0],
-    permissionSets: [],
+    permissionSetArns: [],
     target: FreezeTimeTarget.GROUP,
   });
 
   const onCreate = () => {
     createFreezeTime({
       ...payload,
-      permissionSets: selectedPermissionSets,
+      permissionSetArns: selectedPermissionSets.map((ps) => ps.arn),
       note: payload.note?.length === 0 ? undefined : payload.note,
     });
-
-    if (isSuccess) {
-      setPayload({
-        endTime: new Date().toDateString(),
-        note: '',
-        startTime: new Date().toDateString(),
-        permissionSets: [],
-        target: FreezeTimeTarget.GROUP,
-      });
-
-      setSelectedPermissionSets([]);
-    }
   };
 
   const onChange = (
@@ -75,6 +63,20 @@ export const FreezeTimes = () => {
       [e.target.name]: e.target.value,
     }));
   };
+
+  useEffect(() => {
+    if (isSuccess) {
+      setPayload({
+        endTime: new Date().toDateString(),
+        note: '',
+        startTime: new Date().toDateString(),
+        permissionSetArns: [],
+        target: FreezeTimeTarget.GROUP,
+      });
+
+      setSelectedPermissionSets([]);
+    }
+  }, [isSuccess]);
 
   return (
     <div>
@@ -242,9 +244,9 @@ export const FreezeTimes = () => {
               <th>Creator</th>
               <th>Permission Sets</th>
               <th>Target</th>
+              <th>Status</th>
               <th>Start Date</th>
               <th>End Date</th>
-              <th>Status</th>
               <th>Note</th>
               <th>Created At</th>
               <th>Updated At</th>
@@ -257,11 +259,14 @@ export const FreezeTimes = () => {
               const startTime = new Date(fz.startTime);
               const endTime = new Date(fz.endTime);
               let status = 'PENDING';
+              let badge = 'badge-warning';
 
               if (now >= startTime && now < endTime) {
                 status = 'ACTIVE';
+                badge = 'badge-success';
               } else if (now > endTime) {
                 status = 'EXPIRED';
+                badge = 'badge-error';
               }
               return (
                 <tr key={fz.id}>
@@ -279,13 +284,13 @@ export const FreezeTimes = () => {
                       .join(', ')}
                   </td>
                   <td>{fz.target}</td>
-                  <td>{formatDate(fz.startTime, false)}</td>
-                  <td>{formatDate(fz.endTime, false)}</td>
                   <td>
-                    <span className={`badge badge-${status.toLowerCase()}`}>
+                    <span className={`badge ${badge} badge-outline`}>
                       {status}
                     </span>
                   </td>
+                  <td>{formatDate(fz.startTime, false)}</td>
+                  <td>{formatDate(fz.endTime, false)}</td>
                   <td>{fz.note ?? '-'}</td>
                   <td>{formatDate(fz.createdAt)}</td>
                   <td>{formatDate(fz.updatedAt)}</td>
@@ -307,8 +312,13 @@ export const FreezeTimes = () => {
           </tbody>
         </table>
       </div>
-      {(!data || data.length == 0) && (
+      {(!data || data.length == 0) && !isLoading && (
         <h3 className="mt-5">No data available, please create first.</h3>
+      )}
+      {isLoading && (
+        <div className="flex justify-center mt-5">
+          <span className="loading loading-lg"></span>
+        </div>
       )}
     </div>
   );

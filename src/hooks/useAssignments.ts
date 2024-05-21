@@ -5,7 +5,9 @@ import {
   deleteAssignment,
   deleteAssignmentRequests,
   editAssignment,
+  listAssignmentGroups,
   listAssignmentRequests,
+  listAssignmentUsers,
   listAssignments,
   listMyAssignmentRequests,
   pullAssignments,
@@ -29,15 +31,66 @@ import {
   RequestAssignmentStatus,
   Role,
 } from '@/types';
+import { ChangeEvent, useMemo, useState } from 'react';
 
 export const useListAssignments = () => {
   const {
     auth: { accessToken, user },
   } = useAuth();
+
   const query = useQuery({
     queryKey: ['assignments.list'],
     queryFn: () => listAssignments(accessToken),
     enabled: user?.role === Role.ADMIN,
+  });
+
+  const [search, setSearch] = useState('');
+
+  const searchResult = useMemo(() => {
+    return query.data?.filter(
+      ({ awsAccountName, permissionSets, principalDisplayName }) => {
+        const searchTargetLower = `${awsAccountName} ${permissionSets
+          .map((ps) => ps.arn)
+          .join(', ')} ${principalDisplayName}`.toLowerCase();
+
+        return searchTargetLower.includes(search.toLowerCase());
+      }
+    );
+  }, [query.data, search]);
+
+  const onSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  return {
+    ...query,
+    searchResult,
+    onSearch,
+    search,
+  };
+};
+
+export const useListAssignmentGroups = () => {
+  const {
+    auth: { accessToken, user },
+  } = useAuth();
+  const query = useQuery({
+    queryKey: ['assignments.groups.list'],
+    queryFn: () => listAssignmentGroups(accessToken),
+    enabled: user ? user?.role === Role.ADMIN : false,
+  });
+
+  return query;
+};
+
+export const useListAssignmentUsers = () => {
+  const {
+    auth: { accessToken, user },
+  } = useAuth();
+  const query = useQuery({
+    queryKey: ['assignments.groups.list'],
+    queryFn: () => listAssignmentUsers(accessToken),
+    enabled: user ? user?.role === Role.ADMIN : false,
   });
 
   return query;

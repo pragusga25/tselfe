@@ -3,16 +3,16 @@ import {
   useListMyAssignmentRequests,
   useListPermissionSets,
   useMe,
-  useMyListPermissionSets,
   useRequestAssignment,
   useUpdateUserPassword,
 } from '@/hooks';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   PermissionSets,
   RequestAssignmentOperation,
+  RequestAssignmentPayload,
   RequestAssignmentStatus,
 } from '@/types';
 import toast from 'react-hot-toast';
@@ -30,55 +30,81 @@ export const User = () => {
     onChangePassword,
     onSubmitPassword,
   } = useUpdateUserPassword();
-  const { data: myPs } = useMyListPermissionSets();
-  const [note, setNote] = useState<undefined | string>(undefined);
+
+  const initRequestPayload: Required<RequestAssignmentPayload> = {
+    operation: RequestAssignmentOperation.ATTACH,
+    permissionSetArns: [],
+    principalAwsAccountUserId: '',
+    note: '',
+  };
+
+  const [requestPayload, setRequestPayload] =
+    useState<Required<RequestAssignmentPayload>>(initRequestPayload);
+
   const { data: myAssignmentRequests } = useListMyAssignmentRequests();
   let options: PermissionSets =
     ps?.map((p) => ({ arn: p.arn, name: p.name ?? p.arn })) ?? [];
-  const myArns = myPs?.map((p) => p.arn) ?? [];
 
-  if (operation === RequestAssignmentOperation.ATTACH) {
-    options = options.filter((p) => !myArns.includes(p.arn));
-  } else {
-    options = myPs ?? [];
-  }
+  options = useMemo(() => {
+    return options.filter((p) => {
+      const { principalAwsAccountUserId } = requestPayload;
+      if (principalAwsAccountUserId.length === 0) {
+        return false;
+      }
+
+      const principal = data?.principalAwsAccountUsers.find(
+        (p) => p.id === principalAwsAccountUserId
+      );
+
+      if (!principal) {
+        return false;
+      }
+
+      const pss = principal.permissionSets.map((p) => p.arn);
+
+      if (operation === RequestAssignmentOperation.ATTACH) {
+        return !pss.includes(p.arn);
+      }
+
+      return pss.includes(p.arn);
+    });
+  }, [
+    data?.principalAwsAccountUsers,
+    operation,
+    requestPayload.principalAwsAccountUserId,
+  ]);
 
   const isOptionsEmpty = options.length === 0;
 
-  const [selectedPermissionSets, setSelectedPermissionSets] = useState<
-    {
-      arn: string;
-      name?: string;
-    }[]
-  >([]);
+  const canRequest = (data?.principalAwsAccountUsers.length ?? 0) > 0;
 
-  const canRequest = !!data?.principalId && data.principalType;
-
-  const { mutate: requestMutation, isPending: isRequesting } =
-    useRequestAssignment();
+  const {
+    mutate: requestMutation,
+    isPending: isRequesting,
+    isSuccess: requested,
+  } = useRequestAssignment();
 
   const { mutate: deleteAssignmentRequest, isPending: isDeleting } =
     useDeleteAssignmentRequests();
 
   const onRequest = () => {
-    if (!data?.principalId || !data.principalType) {
-      toast.error('User does not have principalId or principalType');
-      return;
-    }
     requestMutation({
-      permissionSets: selectedPermissionSets,
-      operation,
-      note,
+      ...requestPayload,
+      note: requestPayload.note.length > 0 ? requestPayload.note : undefined,
     });
-    setNote(undefined);
-    setSelectedPermissionSets([]);
   };
+
+  useEffect(() => {
+    if (requested) {
+      setRequestPayload(initRequestPayload);
+    }
+  }, [requested]);
   return (
     <div className="mb-8">
       <section className="border-b-2 pb-4">
         <h2 className="text-2xl font-semibold mb-4">Account</h2>
-        <div className="flex flex-col lg:flex-row justify-center items-center lg:justify-between lg:space-x-6">
-          <div className="w-full max-w-lg lg:w-1/2 text-justify border-2 p-4">
+        <div className="flex flex-col">
+          <div className="w-full text-justify border-2 p-4">
             <p>
               <strong>Name:</strong> {data?.name}
             </p>
@@ -86,19 +112,50 @@ export const User = () => {
               <strong>Username:</strong> {data?.username}
             </p>
             <p>
-              <strong>Principal Id:</strong> {data?.principalId ?? '-'}
+              <strong>Principals:</strong>{' '}
+              {(data?.principalAwsAccountUsers ?? []).length > 0 ? '' : '-'}
             </p>
-            <p>
-              <strong>Principal Type:</strong> {data?.principalType ?? '-'}
-            </p>
-            <p>
-              <strong>Permission Sets: </strong>
-              {myPs?.map((p) => p.name ?? p.arn).join(', ') ?? '-'}
-            </p>
+            <div className="overflow-x-auto mt-5">
+              <table className="table table-zebra table-md">
+                <thead>
+                  <tr>
+                    <th>Principal ID</th>
+                    <th>Principal Display Name</th>
+                    <th>Principal Type</th>
+                    <th>AWS Account Name</th>
+                    <th>Permission Sets</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data?.principalAwsAccountUsers.map(
+                    ({
+                      awsAccountName,
+                      principalDisplayName,
+                      principalId,
+                      principalType,
+                      id,
+                      permissionSets,
+                    }) => {
+                      return (
+                        <tr key={id}>
+                          <td>{principalId}</td>
+                          <td>{principalDisplayName}</td>
+                          <td>{principalType}</td>
+                          <td>{awsAccountName}</td>
+                          <td>
+                            {permissionSets.map((p) => p.name).join(', ')}
+                          </td>
+                        </tr>
+                      );
+                    }
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <form
-            className="flex flex-col max-w-lg w-full lg:w-1/2 mx-auto lg:mx-0 mt-4 lg:mt-0"
+            className="flex flex-col w-full max-w-lg mx-auto mt-5"
             onSubmit={onSubmitPassword}
           >
             <h3>Change Password</h3>
@@ -168,6 +225,37 @@ export const User = () => {
           {canRequest ? (
             <Modal id="requestAssignment" title="Request Assignment">
               <>
+                <div className="form-control">
+                  <div className="label">
+                    <span className="label-text">AWS Account</span>
+                  </div>
+                  <select
+                    value={requestPayload.principalAwsAccountUserId}
+                    className="select select-bordered w-full"
+                    name="awsAccountId"
+                    onChange={(e) => {
+                      setRequestPayload((prev) => ({
+                        ...prev,
+                        principalAwsAccountUserId: e.target.value,
+                      }));
+                    }}
+                  >
+                    <option value="" disabled hidden key="default">
+                      Select Principal
+                    </option>
+                    {data?.principalAwsAccountUsers.map(
+                      ({ awsAccountName, principalDisplayName, id }) => {
+                        const value = id;
+                        return (
+                          <option value={value} key={value}>
+                            {principalDisplayName} ({awsAccountName})
+                          </option>
+                        );
+                      }
+                    )}
+                  </select>
+                </div>
+
                 <div className="mt-2">
                   <div className="label">
                     <span className="label-text">Choose operation</span>
@@ -190,6 +278,10 @@ export const User = () => {
                   </select>
                 </div>
 
+                <div className="label mt-2">
+                  <span className="label-text">Choose Permission Sets</span>
+                </div>
+
                 <div className="overflow-x-auto mt-2">
                   {isOptionsEmpty ? (
                     'No permission sets available for this operation.'
@@ -204,15 +296,23 @@ export const User = () => {
                                 className="checkbox"
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setSelectedPermissionSets(options);
+                                    setRequestPayload((prev) => ({
+                                      ...prev,
+                                      permissionSetArns: options.map(
+                                        (p) => p.arn
+                                      ),
+                                    }));
                                   } else {
-                                    setSelectedPermissionSets([]);
+                                    setRequestPayload((prev) => ({
+                                      ...prev,
+                                      permissionSetArns: [],
+                                    }));
                                   }
                                 }}
                                 checked={
-                                  selectedPermissionSets.length ===
+                                  requestPayload.permissionSetArns.length ===
                                     ps?.length &&
-                                  selectedPermissionSets.length !== 0
+                                  requestPayload.permissionSetArns.length !== 0
                                 }
                               />
                             </label>
@@ -231,19 +331,26 @@ export const User = () => {
                                   className="checkbox"
                                   onChange={(e) => {
                                     if (e.target.checked) {
-                                      setSelectedPermissionSets((prev) => [
+                                      setRequestPayload((prev) => ({
                                         ...prev,
-                                        p,
-                                      ]);
+                                        permissionSetArns: [
+                                          ...prev.permissionSetArns,
+                                          p.arn,
+                                        ],
+                                      }));
                                     } else {
-                                      setSelectedPermissionSets((prev) =>
-                                        prev.filter((ps) => ps.arn !== p.arn)
-                                      );
+                                      setRequestPayload((prev) => ({
+                                        ...prev,
+                                        permissionSetArns:
+                                          prev.permissionSetArns.filter(
+                                            (ps) => ps !== p.arn
+                                          ),
+                                      }));
                                     }
                                   }}
                                   checked={
-                                    !!selectedPermissionSets.find(
-                                      (ps) => ps.arn === p.arn
+                                    !!requestPayload.permissionSetArns.find(
+                                      (arn) => arn === p.arn
                                     )
                                   }
                                 />
@@ -265,8 +372,13 @@ export const User = () => {
                   <textarea
                     className="textarea textarea-bordered w-full"
                     placeholder="Note"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
+                    value={requestPayload.note}
+                    onChange={(e) => {
+                      setRequestPayload((prev) => ({
+                        ...prev,
+                        note: e.target.value,
+                      }));
+                    }}
                   ></textarea>
                 </div>
 
@@ -301,8 +413,8 @@ export const User = () => {
             </thead>
             <tbody>
               {myAssignmentRequests?.map((a) => {
-                let badge = 'badge-accent';
-                let badgeOp = 'badge-warning';
+                let badge = 'badge-warning';
+                let badgeOp = 'badge-accent';
                 const { status, operation } = a;
                 if (status === RequestAssignmentStatus.ACCEPTED) {
                   badge = 'badge-success';
@@ -319,15 +431,21 @@ export const User = () => {
                 return (
                   <tr key={a.id}>
                     <td>{a.permissionSets.map((p) => p.name).join(', ')}</td>
-                    <td className={`badge ${badgeOp} badge-outline`}>
-                      {operation}
+                    <td>
+                      <span className={`badge ${badgeOp} badge-outline`}>
+                        {operation}
+                      </span>
                     </td>
                     <td>{a.note}</td>
-                    <td className={`badge ${badge} badge-outline`}>{status}</td>
+                    <td>
+                      <span className={`badge ${badge} badge-outline`}>
+                        {status}
+                      </span>
+                    </td>
                     <td>{formatDate(a.requestedAt)}</td>
                     <td>
                       {a.responder
-                        ? `${a.responder?.name} (${a.responder?.username})`
+                        ? `${a.responder?.name} (@${a.responder?.username})`
                         : '-'}
                     </td>
                     <td>{a.respondedAt ? formatDate(a.respondedAt) : '-'}</td>

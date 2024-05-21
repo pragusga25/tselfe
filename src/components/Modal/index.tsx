@@ -9,7 +9,7 @@ export const Modal = (props: ModalProps) => {
   const { id, children, title } = props;
   return (
     <dialog id={id} className="modal modal-bottom sm:modal-middle">
-      <div className="modal-box">
+      <div className="modal-box sm:max-w-[580px] lg:max-w-[620px]">
         <form method="dialog">
           {/* if there is a button in form, it will close the modal */}
           <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">

@@ -3,9 +3,8 @@ import {
   useDeleteAssignment,
   useEditAssignment,
   useListAssignments,
-  useListAwsAccounts,
   useListPermissionSets,
-  useListPrincipals,
+  useListPrincipalsNotInDb,
   usePullAssignments,
   usePushAssignments,
   usePushOneAssignment,
@@ -16,25 +15,14 @@ import {
   PermissionSets,
   PrincipalType,
 } from '@/types';
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
 
 export const Assignments = () => {
-  const { data, searchResult, search, onSearch, isLoading } =
-    useListAssignments();
+  const { data } = useListAssignments();
   const { data: permissionSets } = useListPermissionSets();
-  const { data: principals } = useListPrincipals();
-  const { data: awsAccounts } = useListAwsAccounts();
-
-  const assignmentsSet = useMemo(() => {
-    return new Set(
-      data?.map(({ awsAccountId, principalType, principalId }) => {
-        const key = `${awsAccountId}#${principalType}#${principalId}`;
-        return key;
-      })
-    );
-  }, [data]);
+  const { data: principalsNotInDb } = useListPrincipalsNotInDb();
 
   const permissionSetOptions: PermissionSets =
     permissionSets?.map((p) => ({ arn: p.arn, name: p.name ?? p.arn })) ?? [];
@@ -65,34 +53,20 @@ export const Assignments = () => {
     }[]
   >(currentEditPermissionSets ?? []);
 
-  const initCreatePayload: CreateAssignmentPayload = {
+  const initCreatePayload = {
     principalId: '',
     principalType: PrincipalType.GROUP,
-    awsAccountId: '',
-    permissionSetArns: [],
+    permissionSets: [],
   };
 
   const [createPayload, setCreatePayload] =
     useState<CreateAssignmentPayload>(initCreatePayload);
 
-  const tabLists = [PrincipalType.GROUP, PrincipalType.USER];
-  const [tabActive, setTabActive] = useState<PrincipalType>(
-    PrincipalType.GROUP
-  );
-  const isGroupActive = tabActive === PrincipalType.GROUP;
-
-  const filteredPrincipals = principals?.filter(({ principalType, id }) => {
-    const key = `${createPayload.awsAccountId}#${principalType}#${id}`;
-    return (
-      principalType === createPayload.principalType && !assignmentsSet.has(key)
-    );
+  const filteredPrincipals = principalsNotInDb?.filter((p) => {
+    return p.type === createPayload.principalType;
   });
 
   const isFilteredPrincipalsEmpty = filteredPrincipals?.length === 0;
-
-  const onChangeTabe = (tab: PrincipalType) => {
-    setTabActive(tab);
-  };
 
   const onChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -101,18 +75,8 @@ export const Assignments = () => {
 
   const onCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(createPayload);
     createAssignment(createPayload);
   };
-
-  const filteredAssignments = useMemo(() => {
-    return searchResult?.filter(
-      ({ principalType }) => principalType === tabActive
-    );
-  }, [data, tabActive, search]);
-
-  const dataLen = data?.length || 0;
-  const searchLen = searchResult?.length || 0;
 
   useEffect(() => {
     if (currentEditData) {
@@ -128,11 +92,7 @@ export const Assignments = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">
-        {isGroupActive
-          ? 'Group Account Assignments'
-          : 'User Account Assignments'}
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">Account Assignments</h1>
       <div className="flex justify-end mb-2">
         <button
           className={`btn btn-secondary btn-md ${isPending && 'disabled'}`}
@@ -163,27 +123,6 @@ export const Assignments = () => {
         <Modal id="createAssignment" title="Create Assignment">
           <>
             <form className="flex flex-col" onSubmit={onCreate}>
-              <div className="form-control">
-                <div className="label">
-                  <span className="label-text">AWS Account</span>
-                </div>
-                <select
-                  value={createPayload.awsAccountId}
-                  className="select select-bordered w-full"
-                  name="awsAccountId"
-                  onChange={onChange}
-                >
-                  <option value="" disabled hidden key="default">
-                    Select AWS Account
-                  </option>
-                  {awsAccounts?.map((awsAccount) => (
-                    <option value={awsAccount.id} key={awsAccount.id}>
-                      {awsAccount.name} ({awsAccount.id})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="form-control">
                 <div className="label">
                   <span className="label-text">Principal Type</span>
@@ -259,9 +198,9 @@ export const Assignments = () => {
                                 }
                               }}
                               checked={
-                                createPayload.permissionSetArns.length ===
+                                createPayload.permissionSets.length ===
                                   permissionSetOptions?.length &&
-                                createPayload.permissionSetArns.length !== 0
+                                createPayload.permissionSets.length !== 0
                               }
                             />
                           </label>
@@ -282,24 +221,24 @@ export const Assignments = () => {
                                   if (e.target.checked) {
                                     setCreatePayload((prev) => ({
                                       ...prev,
-                                      permissionSetArns: [
-                                        ...prev.permissionSetArns,
-                                        p.arn,
+                                      permissionSets: [
+                                        ...prev.permissionSets,
+                                        p,
                                       ],
                                     }));
                                   } else {
                                     setCreatePayload((prev) => ({
                                       ...prev,
                                       permissionSets:
-                                        prev.permissionSetArns.filter(
-                                          (arn) => arn !== p.arn
+                                        prev.permissionSets.filter(
+                                          (ps) => ps.arn !== p.arn
                                         ),
                                     }));
                                   }
                                 }}
                                 checked={
-                                  !!createPayload.permissionSetArns.find(
-                                    (arn) => arn === p.arn
+                                  !!createPayload.permissionSets.find(
+                                    (ps) => ps.arn === p.arn
                                   )
                                 }
                               />
@@ -327,57 +266,31 @@ export const Assignments = () => {
         </Modal>
       </div>
 
-      <div role="tablist" className="tabs tabs-boxed my-4">
-        {tabLists.map((tab) => (
-          <a
-            role="tab"
-            className={`tab ${tab === tabActive ? 'tab-active' : ''}`}
-            onClick={() => onChangeTabe(tab)}
-            key={tab}
-          >
-            {tab}
-          </a>
-        ))}
-      </div>
-
       <div className="overflow-x-auto">
-        <div className="form-control">
-          <input
-            value={search}
-            onChange={onSearch}
-            type="text"
-            className="input input-bordered border-green-500 w-full mb-4"
-            name="search"
-            placeholder="Search..."
-          />
-        </div>
-        <div className="form-control mb-4">
-          <span className="text-gray-500">
-            {dataLen} data available, {searchLen} data found
-          </span>
-        </div>
         <table className="table table-zebra table-md">
           <thead>
             <tr>
               <th>No.</th>
-              <th>{isGroupActive ? 'Group Id' : 'User Id'}</th>
-              <th>
-                {isGroupActive ? 'Group Display Name' : 'User Display Name'}
-              </th>
-              <th>AWS Account Name</th>
-              <th>Permission Sets</th>
+              <th>Principal Id</th>
+              <th>Principal Name</th>
+              <th>Principal Type</th>
               <th>Last Pushed At</th>
+              <th>Permission Sets</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredAssignments?.map((assignment, idx) => (
+            {data?.map((assignment, idx) => (
               <tr key={assignment.id}>
                 <td>{idx + 1}</td>
                 <td>{assignment.principalId}</td>
                 <td>{assignment.principalDisplayName}</td>
-                <td>{assignment.awsAccountName}</td>
-
+                <td>{assignment.principalType}</td>
+                <td>
+                  {assignment.lastPushedAt
+                    ? formatDate(assignment.lastPushedAt)
+                    : '-'}
+                </td>
                 <td>
                   {assignment.permissionSets
                     .map((ps) => {
@@ -469,9 +382,7 @@ export const Assignments = () => {
                           onClick={() => {
                             edit({
                               id: assignment.id,
-                              permissionSetArns: selectedPermissionSets.map(
-                                (ps) => ps.arn
-                              ),
+                              permissionSets: selectedPermissionSets,
                             });
                             setEditId('');
                             setSelectedPermissionSets([]);
@@ -487,11 +398,6 @@ export const Assignments = () => {
                     </>
                   )}
                 </td>
-                <td>
-                  {assignment.lastPushedAt
-                    ? formatDate(assignment.lastPushedAt)
-                    : '-'}
-                </td>
                 <td className="flex flex-col">
                   <button
                     className="btn btn-sm btn-info"
@@ -501,11 +407,10 @@ export const Assignments = () => {
                     }}
                     disabled={pushingOne && pushId === assignment.id}
                   >
-                    {pushingOne && pushId === assignment.id ? (
+                    {pushingOne && pushId === assignment.id && (
                       <span className="loading loading-spinner"></span>
-                    ) : (
-                      'Push'
                     )}
+                    Push
                   </button>
                   <button
                     className="btn btn-sm btn-accent my-2"
@@ -528,11 +433,10 @@ export const Assignments = () => {
                     }}
                     disabled={deleting && deleteId === assignment.id}
                   >
-                    {deleting && deleteId === assignment.id ? (
+                    {deleting && deleteId === assignment.id && (
                       <span className="loading loading-spinner"></span>
-                    ) : (
-                      'Delete'
                     )}
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -540,14 +444,8 @@ export const Assignments = () => {
           </tbody>
         </table>
       </div>
-      {(!filteredAssignments || filteredAssignments.length == 0) &&
-        !isLoading && (
-          <h3 className="mt-5">No data available, please synchronize first.</h3>
-        )}
-      {isLoading && (
-        <div className="flex justify-center mt-5">
-          <span className="loading loading-lg"></span>
-        </div>
+      {(!data || data.length == 0) && (
+        <h3 className="mt-5">No data available, please synchronize first.</h3>
       )}
     </div>
   );

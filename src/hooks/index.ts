@@ -10,3 +10,4 @@ export * from './usePrincipals';
 export * from './usePermissionSets';
 export * from './useFreezeTimes';
 export * from './useIdentityInstance';
+export * from './useDebounce';

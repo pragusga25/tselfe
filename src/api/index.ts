@@ -3,12 +3,20 @@ import {
   AcceptAssignmentRequestsPayload,
   CountAssignmentRequestsData,
   CountAssignmentRequestsQuery,
+  CreateAccountAdminData,
+  CreateAccountAdminPayload,
+  CreateAccountUserData,
+  CreateAccountUserPayload,
   CreateAssignmentData,
   CreateAssignmentPayload,
   CreateFreezeTimeData,
   CreateFreezeTimePayload,
   CreatePrincipalData,
+  CreatePrincipalGroupData,
+  CreatePrincipalGroupPayload,
   CreatePrincipalPayload,
+  CreatePrincipalUserData,
+  CreatePrincipalUserPayload,
   CreateUserData,
   CreateUserPayload,
   DeleteAssignmentData,
@@ -24,17 +32,25 @@ import {
   EditAssignmentPayload,
   GetIdentityInstanceData,
   GetUserData,
+  ListAccountAdminsData,
+  ListAccountUsersData,
+  ListAssignmentGroupsData,
   ListAssignmentRequestsData,
+  ListAssignmentUsersData,
   ListAssignmentsData,
+  ListAwsAccountsData,
   ListFreezeTimesData,
   ListMyAssignmentRequestsData,
   ListMyPermissionSetsData,
   ListPermissionSetsData,
+  ListPrincipalGroupsData,
+  ListPrincipalUsersData,
   ListPrincipalsData,
   ListPrincipalsNotInDbData,
   ListUsersData,
   LoginData,
   LoginPayload,
+  MeData,
   OkResponse,
   PushOneAssignmentPayload,
   RegisterData,
@@ -43,8 +59,14 @@ import {
   RejectAssignmentRequestsPayload,
   RequestAssignmentData,
   RequestAssignmentPayload,
+  UpdateAccountUserData,
+  UpdateAccountUserPayload,
   UpdatePrincipalData,
+  UpdatePrincipalGroupData,
+  UpdatePrincipalGroupPayload,
   UpdatePrincipalPayload,
+  UpdatePrincipalUserData,
+  UpdatePrincipalUserPayload,
   UpdateUserPasswordData,
   UpdateUserPasswordPayload,
   UpdateUserPrincipalData,
@@ -97,6 +119,30 @@ export const listAssignments = (
 ): Promise<ListAssignmentsData> => {
   return api
     .get('/assignments.list', {
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    })
+    .then((res) => res.data.result);
+};
+
+export const listAssignmentGroups = (
+  accessToken?: string
+): Promise<ListAssignmentGroupsData> => {
+  return api
+    .get('/assignments.groups.list', {
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    })
+    .then((res) => res.data.result);
+};
+
+export const listAssignmentUsers = (
+  accessToken?: string
+): Promise<ListAssignmentUsersData> => {
+  return api
+    .get('/assignments.users.list', {
       headers: {
         Authorization: accessToken ? `Bearer ${accessToken}` : '',
       },
@@ -168,9 +214,9 @@ export const login = (payload: LoginPayload): Promise<LoginData> =>
 export const register = (payload: RegisterPayload): Promise<RegisterData> =>
   apiPrivate.post('/auth.register', payload).then((res) => res.data.result);
 
-export const getMe = (accessToken?: string): Promise<GetUserData> =>
+export const getMe = (accessToken?: string): Promise<MeData> =>
   api
-    .get(`/auth.me`, {
+    .get(`/me`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -186,11 +232,66 @@ export const listUsers = (accessToken?: string): Promise<ListUsersData> =>
     })
     .then((res) => res.data.result);
 
+export const listAccountUsers = (
+  accessToken?: string
+): Promise<ListAccountUsersData> =>
+  api
+    .get(`/users.list`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const listAccountAdmins = (
+  accessToken?: string
+): Promise<ListAccountAdminsData> =>
+  api
+    .get(`/admins.list`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
 export const listPrincipals = (
   accessToken?: string
 ): Promise<ListPrincipalsData> =>
   api
     .get(`/principals.list`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const listAwsAccounts = (
+  accessToken?: string
+): Promise<ListAwsAccountsData> =>
+  api
+    .get(`/aws-accounts.list`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const listPrincipalGroups = (
+  accessToken?: string
+): Promise<ListPrincipalGroupsData> =>
+  api
+    .get(`/principals.groups.list`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const listPrincipalUsers = (
+  accessToken?: string
+): Promise<ListPrincipalUsersData> =>
+  api
+    .get(`/principals.users.list`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -213,7 +314,7 @@ export const deleteUsers = (
   accessToken?: string
 ): Promise<DeleteUsersData> =>
   api
-    .post(`/users.delete`, data, {
+    .post(`/accounts.delete`, data, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -226,6 +327,42 @@ export const createUser = (
 ): Promise<CreateUserData> =>
   api
     .post(`/auth.register`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const createAccountUser = (
+  data: CreateAccountUserPayload,
+  accessToken?: string
+): Promise<CreateAccountUserData> =>
+  api
+    .post(`/users.create`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const updateAccountUser = (
+  data: UpdateAccountUserPayload,
+  accessToken?: string
+): Promise<UpdateAccountUserData> =>
+  api
+    .post(`/users.update`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const createAccountAdmin = (
+  data: CreateAccountAdminPayload,
+  accessToken?: string
+): Promise<CreateAccountAdminData> =>
+  api
+    .post(`/admins.create`, data, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -468,6 +605,54 @@ export const updatePrincipal = (
 ): Promise<UpdatePrincipalData> =>
   api
     .post(`/principals.update`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const createPrincipalGroup = (
+  data: CreatePrincipalGroupPayload,
+  accessToken?: string
+): Promise<CreatePrincipalGroupData> =>
+  api
+    .post(`/principals.groups.create`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const createPrincipalUser = (
+  data: CreatePrincipalUserPayload,
+  accessToken?: string
+): Promise<CreatePrincipalUserData> =>
+  api
+    .post(`/principals.users.create`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const updatePrincipalGroup = (
+  data: UpdatePrincipalGroupPayload,
+  accessToken?: string
+): Promise<UpdatePrincipalGroupData> =>
+  api
+    .post(`/principals.groups.update`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const updatePrincipalUser = (
+  data: UpdatePrincipalUserPayload,
+  accessToken?: string
+): Promise<UpdatePrincipalUserData> =>
+  api
+    .post(`/principals.users.update`, data, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

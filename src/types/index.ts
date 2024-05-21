@@ -25,6 +25,18 @@ export enum FreezeTimeTarget {
   ALL = 'ALL',
 }
 
+export type PrincipalAccount = {
+  principalId: string;
+  awsAccountId: string;
+  principalType: PrincipalType;
+  id: string;
+};
+
+export type PrincipalAccountDetail = PrincipalAccount & {
+  awsAccountName: string;
+  principalDisplayName: string;
+};
+
 export type OkResponse = {
   ok: true;
 };
@@ -48,6 +60,8 @@ export type Assignment = {
   principalId: string;
   principalType: PrincipalType;
   principalDisplayName: string;
+  awsAccountId: string;
+  awsAccountName: string;
   createdAt: string;
   updatedAt: string;
   lastPushedAt: string | null;
@@ -58,9 +72,6 @@ export type User = {
   username: string;
   name: string;
   role: Role;
-  principalId?: string;
-  principalType?: PrincipalType;
-  principalDisplayName?: string;
 };
 export interface UserWithTimeStamps extends User {
   createdAt: string;
@@ -79,6 +90,31 @@ export type LoginPayload = {
   password: string;
 };
 export type CreateUserPayload = Omit<UserWithPassword, 'id'>;
+export type CreateAccountUserPayload = {
+  name: string;
+  username: string;
+  password: string;
+  principalAwsAccountUsers: Omit<PrincipalAccount, 'id'>[];
+};
+export type UpdateAccountUserPayload = {
+  id: string;
+  name: string;
+  username: string;
+  principalAwsAccountUserIdsToBeDeleted?: string[];
+  principalAwsAccountsToBeAdded?: {
+    principalId: string;
+    principalType: 'USER' | 'GROUP';
+    awsAccountId: string;
+  }[];
+};
+export type UpdateAccountUserData = OkResponse;
+export type CreateAccountUserData = IdResponse;
+export type CreateAccountAdminPayload = {
+  name: string;
+  username: string;
+  password: string;
+};
+export type CreateAccountAdminData = IdResponse;
 export type CreatePrincipalPayload = {
   displayName: string;
   type: PrincipalType;
@@ -91,17 +127,44 @@ export type UpdatePrincipalPayload = {
   type: PrincipalType;
   id: string;
 };
+export type CreatePrincipalGroupPayload = {
+  displayName: string;
+  description?: string;
+};
+export type UpdatePrincipalGroupPayload = CreatePrincipalGroupPayload & {
+  id: string;
+};
+export type CreatePrincipalUserPayload = {
+  displayName: string;
+  username: string;
+  givenName: string;
+  familyName: string;
+};
+export type UpdatePrincipalUserPayload = Omit<
+  CreatePrincipalUserPayload,
+  'username'
+> & {
+  id: string;
+};
 export type DeletePrincipalPayload = {
   type: PrincipalType;
   id: string;
 };
+export type ListAssignmentGroupsData = Assignment[];
+export type ListAssignmentUsersData = Assignment[];
+
 export type DeletePrincipalData = OkResponse;
 export type UpdatePrincipalData = OkResponse;
+export type UpdatePrincipalGroupData = OkResponse;
+export type UpdatePrincipalUserData = OkResponse;
+export type CreatePrincipalGroupData = IdResponse;
+export type CreatePrincipalUserData = IdResponse;
 export type CreatePrincipalData = IdResponse;
 export type RequestAssignmentPayload = {
-  permissionSets: PermissionSets;
+  permissionSetArns: string[];
   operation: RequestAssignmentOperation;
   note?: string;
+  principalAwsAccountUserId: string;
 };
 
 export type AcceptAssignmentRequestsPayload = {
@@ -124,7 +187,31 @@ export type DeleteAssignmentData = OkResponse;
 export type RegisterPayload = Omit<UserWithPassword, 'id'>;
 export type RegisterData = IdResponse;
 export type GetUserData = User;
+export type MeData = User & {
+  principalAwsAccountUsers: {
+    principalId: string;
+    principalType: string;
+    awsAccountId: string[];
+    awsAccountName: string[];
+    permissionSets: PermissionSets;
+    principalDisplayName: string;
+    id: string;
+  }[];
+};
 export type ListUsersData = UserWithTimeStamps[];
+export type ListAccountUsersData = {
+  id: string;
+  name: string;
+  username: string;
+  principalAwsAccountUsers: PrincipalAccountDetail[];
+  createdAt: string;
+}[];
+export type ListAccountAdminsData = {
+  id: string;
+  name: string;
+  username: string;
+  createdAt: string;
+}[];
 export type CreateUserData = IdResponse;
 export type RequestAssignmentData = IdResponse;
 export type AcceptAssignmentRequestsData = OkResponse;
@@ -134,23 +221,62 @@ export type DeleteUsersPayload = {
   ids: string[];
 };
 export type DeleteUsersData = OkResponse;
-export type ListPrincipalsData = {
+export type PrincipalGroup = {
   id: string;
   displayName: string;
+  description: string | null;
+  principalType: PrincipalType.GROUP;
+};
+
+export type PrincipalAwsAccountUserDetail = {
+  principalId: string;
+  awsAccountId: string;
   principalType: PrincipalType;
-}[];
+  permissionSets: PermissionSets;
+  principalDisplayName: string;
+  awsAccountName: string;
+};
+
+export type PrincipalUser = {
+  id: string;
+  displayName: string;
+  name: {
+    givenName: string;
+    familyName: string;
+  };
+  username: string;
+  principalType: PrincipalType.USER;
+};
+// export type ListPrincipalsData = {
+//   id: string;
+//   displayName: string;
+//   principalType: PrincipalType;
+// }[];
+export type ListPrincipalsData = PrincipalGroup[] | PrincipalUser[];
+export type AwsAccount = {
+  id: string;
+  name: string;
+};
+export type ListAwsAccountsData = AwsAccount[];
+export type ListPrincipalUsersData = PrincipalUser[];
+export type ListPrincipalGroupsData = PrincipalGroup[];
 export type ListPrincipalsNotInDbData = {
   id: string;
   displayName: string;
   type: PrincipalType;
 }[];
 export type ListPermissionSetsData = PermissionSets;
-export type ListMyPermissionSetsData = PermissionSets;
+export type ListMyPermissionSetsData = PrincipalAwsAccountUserDetail[];
 type AssignmentRequestData = {
   id: string;
   permissionSets: PermissionSets;
   operation: RequestAssignmentOperation;
   status: RequestAssignmentStatus;
+  principalId: string;
+  principalType: PrincipalType;
+  principalDisplayName: string;
+  awsAccountId: string;
+  awsAccountName: string;
   note: string | null;
   requestedAt: string;
   respondedAt: string | null;
@@ -164,9 +290,6 @@ interface AssignmentRequestWithRequesterData extends AssignmentRequestData {
   requester: {
     name: string;
     username: string;
-    principalId: string;
-    principalType: PrincipalType;
-    principalDisplayName: string;
   };
 }
 
@@ -208,7 +331,7 @@ export type ListFreezeTimesData = {
 export type CreateFreezeTimePayload = {
   note?: string;
   target: FreezeTimeTarget;
-  permissionSets: PermissionSets;
+  permissionSetArns: string[];
   startTime: string;
   endTime: string;
 };
@@ -224,7 +347,7 @@ export type UpdateUserPasswordPayload = {
 };
 export type UpdateUserPasswordData = OkResponse;
 export type EditAssignmentPayload = {
-  permissionSets: PermissionSets;
+  permissionSetArns: string[];
   id: string;
 };
 export type EditAssignmentData = OkResponse;
@@ -233,8 +356,9 @@ export type PushOneAssignmentPayload = {
 };
 export type PushOneAssignmentData = OkResponse;
 export type CreateAssignmentPayload = {
-  permissionSets: PermissionSets;
+  permissionSetArns: string[];
   principalId: string;
   principalType: PrincipalType;
+  awsAccountId: string;
 };
 export type CreateAssignmentData = IdResponse;

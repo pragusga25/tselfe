@@ -1,17 +1,26 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import {
+  createAccountAdmin,
+  createAccountUser,
   createUser,
   deleteUsers,
   getMe,
+  listAccountAdmins,
+  listAccountUsers,
   listUsers,
+  updateAccountUser,
   updateUserPassword,
   updateUserPrincipal,
 } from '@/api';
 import {
+  CreateAccountAdminPayload,
+  CreateAccountUserPayload,
   CreateUserPayload,
   DeleteUsersPayload,
   PrincipalType,
+  Role,
+  UpdateAccountUserPayload,
   UpdateUserPasswordPayload,
   UpdateUserPrincipalPayload,
 } from '@/types';
@@ -26,6 +35,34 @@ export const useListUsers = () => {
   const query = useQuery({
     queryKey: ['users.list'],
     queryFn: () => listUsers(accessToken),
+  });
+
+  return query;
+};
+
+export const useListAccountUsers = () => {
+  const {
+    auth: { accessToken, user },
+  } = useAuth();
+
+  const query = useQuery({
+    queryKey: ['users.list'],
+    queryFn: () => listAccountUsers(accessToken),
+    enabled: user?.role === Role.ADMIN,
+  });
+
+  return query;
+};
+
+export const useListAccountAdmins = () => {
+  const {
+    auth: { accessToken, user },
+  } = useAuth();
+
+  const query = useQuery({
+    queryKey: ['admins.list'],
+    queryFn: () => listAccountAdmins(accessToken),
+    enabled: user?.role === Role.ADMIN,
   });
 
   return query;
@@ -55,6 +92,30 @@ export const useCreateUser = () => {
   return mutation;
 };
 
+export const useUpdateAccountUser = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationKey: ['users.Update'],
+    mutationFn: (payload: UpdateAccountUserPayload) =>
+      toast.promise(updateAccountUser(payload, accessToken), {
+        loading: 'Updating user...',
+        success: 'User updated successfully',
+        error: 'Error updating user',
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['users.list'],
+      });
+    },
+  });
+
+  return mutation;
+};
+
 export const useDeleteUsers = () => {
   const queryClient = useQueryClient();
   const {
@@ -62,7 +123,7 @@ export const useDeleteUsers = () => {
   } = useAuth();
 
   const mutation = useMutation({
-    mutationKey: ['users.delete'],
+    mutationKey: ['accounts.delete'],
     mutationFn: (payload: DeleteUsersPayload) =>
       toast.promise(deleteUsers(payload, accessToken), {
         loading: 'Deleting user...',
@@ -72,6 +133,9 @@ export const useDeleteUsers = () => {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['users.list'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['admins.list'],
       });
     },
   });
@@ -190,4 +254,52 @@ export const useUpdateUserPrincipal = () => {
     isPrincipalUpdated,
     mutate,
   };
+};
+
+export const useCreateAccountUser = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationKey: ['users.create'],
+    mutationFn: (payload: CreateAccountUserPayload) =>
+      toast.promise(createAccountUser(payload, accessToken), {
+        loading: 'Creating user...',
+        success: 'User created successfully',
+        error: 'Error creating user',
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['users.list'],
+      });
+    },
+  });
+
+  return mutation;
+};
+
+export const useCreateAccountAdmin = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationKey: ['admins.create'],
+    mutationFn: (payload: CreateAccountAdminPayload) =>
+      toast.promise(createAccountAdmin(payload, accessToken), {
+        loading: 'Creating admin...',
+        success: 'Admin created successfully',
+        error: 'Error creating admin',
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['admins.list'],
+      });
+    },
+  });
+
+  return mutation;
 };

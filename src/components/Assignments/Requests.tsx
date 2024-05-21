@@ -8,7 +8,7 @@ import { formatDate } from '@/lib/utils';
 import { RequestAssignmentOperation, RequestAssignmentStatus } from '@/types';
 
 export const AssignmentRequests = () => {
-  const { data, refetch } = useListAssignmentRequests();
+  const { data, isLoading } = useListAssignmentRequests();
   const { mutate: accept, isPending: accepting } =
     useAcceptAssignmentRequests();
   const { mutate: reject, isPending: rejecting } =
@@ -27,10 +27,9 @@ export const AssignmentRequests = () => {
               <th>No.</th>
               <th>Requester</th>
               <th>Principal</th>
-              {/* <th>Principal ID</th> */}
               <th>Permission Sets</th>
-              <th>Operation</th>
               <th>Note</th>
+              <th>Operation</th>
               <th>Status</th>
               <th>Requested At</th>
               <th>Responder</th>
@@ -40,9 +39,15 @@ export const AssignmentRequests = () => {
           </thead>
           <tbody>
             {data?.map((req, idx) => {
-              let badge = 'badge-accent';
-              let badgeOp = 'badge-warning';
-              const { status, operation } = req;
+              let badge = 'badge-warning';
+              let badgeOp = 'badge-accent';
+              const {
+                status,
+                operation,
+                awsAccountName,
+                principalDisplayName,
+                principalType,
+              } = req;
               if (status === RequestAssignmentStatus.ACCEPTED) {
                 badge = 'badge-success';
               } else if (status === RequestAssignmentStatus.REJECTED) {
@@ -56,13 +61,7 @@ export const AssignmentRequests = () => {
               const ableToDelete =
                 req.status !== RequestAssignmentStatus.PENDING;
 
-              const {
-                name,
-                principalDisplayName,
-                username,
-                principalId,
-                principalType,
-              } = req.requester;
+              const { name, username } = req.requester;
 
               return (
                 <tr key={req.id}>
@@ -71,9 +70,8 @@ export const AssignmentRequests = () => {
                     {name} (@{username})
                   </td>
                   <td>
-                    {principalDisplayName} ({principalType}) - {principalId}
+                    {principalDisplayName} ({principalType}) - {awsAccountName}
                   </td>
-                  {/* <td>{principalId}</td> */}
                   <td>
                     {req.permissionSets
                       .map((ps) => {
@@ -85,16 +83,22 @@ export const AssignmentRequests = () => {
                       })
                       .join(', ')}
                   </td>
-                  <td className={`badge ${badgeOp} badge-outline`}>
-                    {operation}
-                  </td>
                   <td>{req.note}</td>
-                  <td className={`badge ${badge} badge-outline `}>{status}</td>
+                  <td>
+                    <span className={`badge ${badgeOp} badge-outline`}>
+                      {operation}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${badge} badge-outline`}>
+                      {status}
+                    </span>
+                  </td>
                   <td>{formatDate(req.requestedAt)}</td>
                   <td>
                     {req.responder ? (
                       <>
-                        {req.responder.name} ({req.responder.username})
+                        {req.responder.name} (@{req.responder.username})
                       </>
                     ) : (
                       '-'
@@ -107,14 +111,14 @@ export const AssignmentRequests = () => {
                         className="btn btn-error"
                         onClick={() => {
                           deleteAssignmentRequests({ ids: [req.id] });
-                          refetch();
                         }}
                         disabled={deleting}
                       >
-                        {deleting && (
+                        {deleting ? (
                           <span className="loading loading-spinner"></span>
+                        ) : (
+                          'Delete'
                         )}
-                        Delete
                       </button>
                     ) : (
                       <>
@@ -125,20 +129,22 @@ export const AssignmentRequests = () => {
                           }
                           disabled={accepting}
                         >
-                          {accepting && (
+                          {accepting ? (
                             <span className="loading loading-spinner"></span>
+                          ) : (
+                            'Accept'
                           )}
-                          Accept
                         </button>
                         <button
                           className="btn btn-error"
                           onClick={() => reject({ ids: [req.id] })}
                           disabled={rejecting}
                         >
-                          {rejecting && (
+                          {rejecting ? (
                             <span className="loading loading-spinner"></span>
+                          ) : (
+                            'Reject'
                           )}
-                          Reject
                         </button>
                       </>
                     )}
@@ -149,8 +155,13 @@ export const AssignmentRequests = () => {
           </tbody>
         </table>
       </div>
-      {(!data || data.length == 0) && (
+      {(!data || data.length == 0) && !isLoading && (
         <h3 className="mt-5">No data available.</h3>
+      )}
+      {isLoading && (
+        <div className="flex justify-center mt-5">
+          <span className="loading loading-lg"></span>
+        </div>
       )}
     </div>
   );

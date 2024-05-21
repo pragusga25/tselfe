@@ -4,7 +4,7 @@ import { Assignments } from '@/components/Assignments';
 import { Login } from './components/Login';
 import { RedirectAuthenticated } from './components/RedirectAuthenticated';
 import { Accounts } from './components/Accounts';
-import { useMe } from './hooks';
+import { useAuth, useMe } from './hooks';
 import { User } from './components/User';
 import { AssignmentRequests } from './components/Assignments/Requests';
 import { FreezeTimes } from './components/FreezeTimes';
@@ -13,12 +13,10 @@ import { Role } from './types';
 import { Principals } from './components/Principals';
 
 function App() {
-  const { data } = useMe();
-  let isAdmin = true;
-
-  if (data && data.role === Role.USER) {
-    isAdmin = false;
-  }
+  const {
+    auth: { user },
+  } = useAuth();
+  let isAdmin = user?.role === Role.ADMIN;
 
   return (
     <Routes>
