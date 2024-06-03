@@ -133,6 +133,8 @@ export type CreatePrincipalGroupPayload = {
 };
 export type UpdatePrincipalGroupPayload = CreatePrincipalGroupPayload & {
   id: string;
+  membershipIdsToBeDeleted?: string[];
+  userIdsToBeAdded?: string[];
 };
 export type CreatePrincipalUserPayload = {
   displayName: string;
@@ -145,6 +147,8 @@ export type UpdatePrincipalUserPayload = Omit<
   'username'
 > & {
   id: string;
+  groupIdsToBeAdded?: string[];
+  membershipIdsToBeDeleted?: string[];
 };
 export type DeletePrincipalPayload = {
   type: PrincipalType;
@@ -258,8 +262,20 @@ export type AwsAccount = {
   name: string;
 };
 export type ListAwsAccountsData = AwsAccount[];
-export type ListPrincipalUsersData = PrincipalUser[];
-export type ListPrincipalGroupsData = PrincipalGroup[];
+export type ListPrincipalUsersData = (PrincipalUser & {
+  memberships: {
+    groupId: string;
+    membershipId: string;
+    groupDisplayName: string;
+  }[];
+})[];
+export type ListPrincipalGroupsData = (PrincipalGroup & {
+  memberships: {
+    userId: string;
+    membershipId: string;
+    userDisplayName: string;
+  }[];
+})[];
 export type ListPrincipalsNotInDbData = {
   id: string;
   displayName: string;
@@ -322,18 +338,29 @@ export type ListFreezeTimesData = {
   creator: {
     name: string;
   };
-  note: string | null;
+  name: string;
   target: FreezeTimeTarget;
   permissionSets: PermissionSets;
   startTime: string;
   endTime: string;
+  excludedPrincipals:
+    | {
+        id: string;
+        type: PrincipalType;
+        displayName: string;
+      }[]
+    | null;
 }[];
 export type CreateFreezeTimePayload = {
-  note?: string;
+  name: string;
   target: FreezeTimeTarget;
   permissionSetArns: string[];
   startTime: string;
   endTime: string;
+  excludedPrincipals?: {
+    id: string;
+    type: PrincipalType;
+  }[];
 };
 export type CreateFreezeTimeData = OkResponse;
 export type DeleteFreezeTimesPayload = {

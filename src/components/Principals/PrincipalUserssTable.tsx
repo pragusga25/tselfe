@@ -1,10 +1,12 @@
 import {
   useDeletePrincipal,
+  useListPrincipalGroups,
   useListPrincipalUsers,
   useUpdatePrincipalUser,
 } from '@/hooks';
 import { PrincipalType, UpdatePrincipalUserPayload } from '@/types';
-import { useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { DeleteModal } from '../Modal/DeleteModal';
 
 export const PrincipalUsersTable = () => {
   const {
@@ -16,22 +18,107 @@ export const PrincipalUsersTable = () => {
     data,
   } = useListPrincipalUsers();
 
-  const { mutate: updateUser, isPending: isUpdating } =
-    useUpdatePrincipalUser();
+  const { data: groups } = useListPrincipalGroups();
 
-  const { mutate: deletePrincipal, isPending: isDeleting } =
-    useDeletePrincipal();
+  const {
+    mutate: updateUser,
+    isPending: isUpdating,
+    isSuccess: updated,
+  } = useUpdatePrincipalUser();
+
+  const { mutate: deletePrincipal } = useDeletePrincipal();
 
   const initUpdatePayload: UpdatePrincipalUserPayload = {
     displayName: '',
     id: '',
     familyName: '',
     givenName: '',
+    membershipIdsToBeDeleted: undefined,
+    groupIdsToBeAdded: undefined,
   };
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [updatePayload, setUpdatePayload] =
     useState<UpdatePrincipalUserPayload>(initUpdatePayload);
+  const [memberships, setMemberships] = useState<
+    { groupId: string; key: string }[]
+  >([]);
+
+  const [deleteModal, setDeleteModal] = useState(false);
+
+  const filteredGroups = useMemo(() => {
+    const editGroupIds = users
+      ?.find((user) => user.id === updatePayload.id)
+      ?.memberships.map(({ groupId }) => groupId);
+
+    const editGroupIdsToBeAdded = updatePayload.groupIdsToBeAdded;
+
+    return groups?.filter(
+      ({ id }) =>
+        !editGroupIds?.includes(id) && !editGroupIdsToBeAdded?.includes(id)
+    );
+  }, [
+    updatePayload.membershipIdsToBeDeleted,
+    updatePayload.groupIdsToBeAdded,
+    updatePayload.id,
+    users,
+  ]);
+
+  const openDeleteModal = () => setDeleteModal(true);
+  const closeDeleteModal = () => setDeleteModal(false);
+
+  const addMembership = () => {
+    setMemberships((prev) => [
+      ...prev,
+      {
+        groupId: '',
+        key: `${new Date(new Date().getTime()).getTime()}`,
+      },
+    ]);
+  };
+
+  const removeMembership = (key: string) => {
+    setMemberships((prev) => prev.filter((item) => item.key !== key));
+  };
+
+  const handleMembershipChange = (
+    key: string,
+    e: ChangeEvent<HTMLSelectElement>
+  ) => {
+    const { value } = e.target;
+
+    setMemberships((prev) =>
+      prev.map((item) =>
+        item.key === key
+          ? {
+              ...item,
+              groupId: value,
+            }
+          : item
+      )
+    );
+  };
+
+  const resetUpdatePayload = () => {
+    setUpdatePayload(initUpdatePayload);
+    setMemberships([]);
+  };
+
+  const onUpdate = () => {
+    const isMembershipEmpty = memberships.length === 0;
+    updateUser({
+      ...updatePayload,
+      groupIdsToBeAdded: isMembershipEmpty
+        ? undefined
+        : memberships.map(({ groupId }) => groupId),
+    });
+  };
+
+  useEffect(() => {
+    if (updated) {
+      resetUpdatePayload();
+    }
+  }, [updated]);
 
   if (isUsersLoading) {
     return <span className="loading loading-spinner loading-md" />;
@@ -47,6 +134,18 @@ export const PrincipalUsersTable = () => {
 
   return (
     <>
+      <DeleteModal
+        onClose={closeDeleteModal}
+        isOpen={deleteModal}
+        description="Are you sure you want to delete this user?"
+        onConfirm={() => {
+          if (deleteId) {
+            deletePrincipal({ id: deleteId, type: PrincipalType.USER });
+            closeDeleteModal();
+          }
+        }}
+        title="Delete User"
+      />
       <div className="form-control">
         <input
           value={search}
@@ -68,11 +167,12 @@ export const PrincipalUsersTable = () => {
         <thead>
           <tr>
             <th>No</th>
-            <th>User Id</th>
+            {/* <th>User Id</th> */}
             <th>Username</th>
             <th>Display Name</th>
             <th>Given Name</th>
             <th>Family Name</th>
+            <th className="min-w-48">Memberships (Groups)</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -90,13 +190,21 @@ export const PrincipalUsersTable = () => {
               id,
               name: { familyName, givenName },
               username,
+              memberships: mems,
             } = user;
             const isUpdatingCurrentData = updatePayload.id === id;
-            const isDeletingCurrentData = deleteId === id && isDeleting;
+
+            const filteredMemberships = mems.filter(
+              ({ membershipId }) =>
+                !(updatePayload.membershipIdsToBeDeleted || []).includes(
+                  membershipId
+                )
+            );
+
             return (
               <tr key={id}>
                 <td>{idx + 1}</td>
-                <td>{id}</td>
+                {/* <td>{id}</td> */}
                 <td>{username}</td>
                 <td>
                   {isUpdatingCurrentData ? (
@@ -162,12 +270,86 @@ export const PrincipalUsersTable = () => {
                   )}
                 </td>
 
+                <td>
+                  <ul className="list-disc list-outside grid">
+                    {filteredMemberships.map(
+                      ({ groupDisplayName, membershipId }) => {
+                        return (
+                          <li className="h-fit mb-2" key={membershipId}>
+                            <span>{groupDisplayName}</span>
+                            {isUpdatingCurrentData && (
+                              <button
+                                className="hover:bg-red-600 flex items-center justify-center bg-red-400 w-8 h-8 text-center text-white rounded-full float-right"
+                                onClick={() => {
+                                  setUpdatePayload((prev) => {
+                                    const { membershipIdsToBeDeleted } = prev;
+                                    return {
+                                      ...prev,
+                                      membershipIdsToBeDeleted: [
+                                        ...(membershipIdsToBeDeleted || []),
+                                        membershipId,
+                                      ],
+                                    };
+                                  });
+                                }}
+                              >
+                                <span>X</span>
+                              </button>
+                            )}
+                          </li>
+                        );
+                      }
+                    )}
+                  </ul>
+                  {isUpdatingCurrentData && (
+                    <>
+                      {memberships.map(({ key, groupId }) => (
+                        <div className="form-control mt-2" key={key}>
+                          <select
+                            value={groupId}
+                            onChange={(e) => handleMembershipChange(key, e)}
+                            name="membership"
+                            className="select select-bordered w-full"
+                          >
+                            <option value="">Select Group</option>
+                            {filteredGroups?.map((group) => (
+                              <option key={group.id} value={group.id}>
+                                {group.displayName}
+                              </option>
+                            ))}
+                          </select>
+
+                          {memberships.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn btn-error btn-sm mt-2"
+                              onClick={() => removeMembership(key)}
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        className="btn btn-accent mt-4 w-full"
+                        onClick={addMembership}
+                      >
+                        Add Membership
+                      </button>
+                    </>
+                  )}
+                </td>
+
                 <td className="flex flex-col">
                   <button
-                    className="btn btn-info btn-sm mb-2"
+                    className={`btn btn-sm mb-2 ${
+                      isUpdatingCurrentData ? 'btn-success' : 'btn-info'
+                    }`}
                     onClick={() => {
                       if (isUpdatingCurrentData) {
-                        updateUser(updatePayload);
+                        onUpdate();
                         setUpdatePayload(initUpdatePayload);
                       } else {
                         setUpdatePayload({
@@ -180,14 +362,10 @@ export const PrincipalUsersTable = () => {
                     }}
                     disabled={isUpdating && isUpdatingCurrentData}
                   >
-                    {isUpdatingCurrentData && isUpdating ? (
-                      <>
-                        <span className="loading loading-spinner loading-sm" />
-                        Save
-                      </>
-                    ) : (
-                      'Update'
+                    {isUpdatingCurrentData && isUpdating && (
+                      <span className="loading loading-spinner loading-sm" />
                     )}
+                    {isUpdatingCurrentData ? 'Save' : 'Update'}
                   </button>
                   {isUpdatingCurrentData && (
                     <button
@@ -203,13 +381,9 @@ export const PrincipalUsersTable = () => {
                     className="btn btn-error btn-sm"
                     onClick={() => {
                       setDeleteId(id);
-                      deletePrincipal({ id, type: PrincipalType.USER });
+                      openDeleteModal();
                     }}
-                    disabled={isDeletingCurrentData}
                   >
-                    {isDeletingCurrentData && (
-                      <span className="loading loading-spinner loading-sm" />
-                    )}
                     Delete
                   </button>
                 </td>

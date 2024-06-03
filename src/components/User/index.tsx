@@ -88,8 +88,10 @@ export const User = () => {
     useDeleteAssignmentRequests();
 
   const onRequest = () => {
+    // console.log(requestPayload)
     requestMutation({
       ...requestPayload,
+      operation,
       note: requestPayload.note.length > 0 ? requestPayload.note : undefined,
     });
   };

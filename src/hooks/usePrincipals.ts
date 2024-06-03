@@ -256,6 +256,9 @@ export const useUpdatePrincipalGroup = () => {
       await queryClient.invalidateQueries({
         queryKey: ['principals.groups.list'],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ['principals.users.list'],
+      });
     },
   });
 
@@ -276,6 +279,9 @@ export const useUpdatePrincipalUser = () => {
         error: 'Error updating principal',
       }),
     onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['principals.groups.list'],
+      });
       await queryClient.invalidateQueries({
         queryKey: ['principals.users.list'],
       });

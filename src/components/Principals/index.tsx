@@ -20,7 +20,7 @@ export const Principals = () => {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">
-        List
+        List Principal
         {isGroupActive ? ' Groups' : ' Users'}
       </h1>
       <div className="flex justify-end mb-2">

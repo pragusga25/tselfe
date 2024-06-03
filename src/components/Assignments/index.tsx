@@ -101,7 +101,7 @@ export const Assignments = () => {
 
   const onCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(createPayload);
+    // console.log(createPayload);
     createAssignment(createPayload);
   };
 

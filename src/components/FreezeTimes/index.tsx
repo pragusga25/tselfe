@@ -3,6 +3,7 @@ import {
   useDeleteFreezeTimes,
   useListFreezeTimes,
   useListPermissionSets,
+  useListPrincipals,
 } from '@/hooks';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
@@ -10,9 +11,10 @@ import {
   CreateFreezeTimePayload,
   FreezeTimeTarget,
   PermissionSets,
+  PrincipalType,
 } from '@/types';
-import { ChangeEvent, useEffect, useState } from 'react';
-import { formatDate } from '@/lib/utils';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { formatDate, getLocaleDateString } from '@/lib/utils';
 
 export const FreezeTimes = () => {
   const { data, isLoading } = useListFreezeTimes();
@@ -23,6 +25,8 @@ export const FreezeTimes = () => {
     isPending,
     isSuccess,
   } = useCreateFreezeTime();
+  const { data: principals } = useListPrincipals();
+
   const permissionSetOptions: PermissionSets =
     permissionSets?.map((p) => ({ arn: p.arn, name: p.name ?? p.arn })) ?? [];
   const isPermissionSetOptionsEmpty = permissionSetOptions.length === 0;
@@ -36,51 +40,124 @@ export const FreezeTimes = () => {
   const { mutate: deleteFreezeTimes, isPending: isDeleting } =
     useDeleteFreezeTimes();
 
-  const tomorrowDate = new Date();
-  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-
-  const [payload, setPayload] = useState<CreateFreezeTimePayload>({
-    endTime: tomorrowDate.toISOString().split('T')[0],
-    note: '',
-    startTime: new Date().toISOString().split('T')[0],
+  const initPayload = {
+    endTime: getLocaleDateString(new Date(), {
+      addDay: 1,
+      format: 'yyyy-mm-ddThh:MM',
+    }),
+    name: '',
+    startTime: getLocaleDateString(new Date(), {
+      format: 'yyyy-mm-ddThh:MM',
+      addHours: 1,
+    }),
     permissionSetArns: [],
     target: FreezeTimeTarget.GROUP,
-  });
+  };
+
+  const [payload, setPayload] = useState<CreateFreezeTimePayload>(initPayload);
+
+  const [deleteId, setDeleteId] = useState<string>('');
+
+  const [excludedPrincipals, setExcludedPrincipals] = useState<
+    {
+      principal: string;
+      key: string;
+    }[]
+  >([]);
+
+  const filteredPrincipals = useMemo(() => {
+    const excludedPrincipalsSet = new Set(
+      excludedPrincipals.map((p) => p.principal)
+    );
+    return principals?.filter((p) => {
+      const typeFilter =
+        payload.target == FreezeTimeTarget.ALL ||
+        p.principalType.toString() == payload.target.toString();
+
+      const alreadyExc = excludedPrincipalsSet.has(
+        p.id + '#' + p.principalType + '#' + p.displayName
+      );
+
+      return typeFilter && !alreadyExc;
+    });
+  }, [payload.target, principals, excludedPrincipals]);
 
   const onCreate = () => {
+    const filteredExcludedPrincipals = excludedPrincipals
+      .filter((p) => p.principal.length > 0)
+      .map((p) => ({
+        id: p.principal.split('#')[0],
+        type: p.principal.split('#')[1] as PrincipalType,
+      }));
+    const useExc = filteredExcludedPrincipals.length > 0;
+
     createFreezeTime({
       ...payload,
       permissionSetArns: selectedPermissionSets.map((ps) => ps.arn),
-      note: payload.note?.length === 0 ? undefined : payload.note,
+      excludedPrincipals: useExc ? filteredExcludedPrincipals : undefined,
+      startTime: payload.startTime.replace('T', ' '),
+      endTime: payload.endTime.replace('T', ' '),
     });
   };
 
   const onChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
+    const value = e.target.value;
+    const targetName = e.target.name;
+    if (targetName === 'target') {
+      setExcludedPrincipals([]);
+    }
+
     setPayload((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [targetName]: value,
     }));
+  };
+
+  const addExcludedPrincipals = () => {
+    setExcludedPrincipals((prev) => [
+      ...prev,
+      {
+        principal: `${filteredPrincipals?.[0]?.id}#${filteredPrincipals?.[0]?.principalType}#${filteredPrincipals?.[0]?.displayName}`,
+        key: new Date().getTime().toString(),
+      },
+    ]);
+  };
+
+  const removeExcludedPrincipals = (key: string) => {
+    setExcludedPrincipals((prev) => prev.filter((item) => item.key !== key));
+  };
+
+  const handleExcludedPrincipalsChange = (
+    key: string,
+    e: ChangeEvent<HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setExcludedPrincipals((prev) =>
+      prev.map((item) =>
+        item.key === key
+          ? {
+              ...item,
+              [name]: value,
+            }
+          : item
+      )
+    );
   };
 
   useEffect(() => {
     if (isSuccess) {
-      setPayload({
-        endTime: new Date().toDateString(),
-        note: '',
-        startTime: new Date().toDateString(),
-        permissionSetArns: [],
-        target: FreezeTimeTarget.GROUP,
-      });
-
+      setPayload(initPayload);
       setSelectedPermissionSets([]);
+      setExcludedPrincipals([]);
     }
   }, [isSuccess]);
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Freeze Times</h1>
+
       <div className="flex justify-end mb-2">
         {/* <button className={`btn btn-primary btn-md`}>Create</button> */}
         <ModalButton
@@ -91,6 +168,19 @@ export const FreezeTimes = () => {
 
         <Modal id="createFreezeTime" title="Create Freeze Time">
           <>
+            <div className="mt-2 form-control">
+              <div className="label">
+                <span className="label-text">Name</span>
+              </div>
+              <input
+                className="input input-bordered w-full"
+                placeholder="Unique name"
+                value={payload.name}
+                name="name"
+                onChange={onChange}
+              />
+            </div>
+
             <div className="form-control">
               <div className="label">
                 <span className="label-text">Target</span>
@@ -111,10 +201,10 @@ export const FreezeTimes = () => {
 
             <div className="form-control mt-2">
               <div className="label">
-                <span className="label-text">Start Date</span>
+                <span className="label-text">Start Time</span>
               </div>
               <input
-                type="date"
+                type="datetime-local"
                 className="input input-bordered w-full"
                 name="startTime"
                 value={payload.startTime}
@@ -124,15 +214,75 @@ export const FreezeTimes = () => {
 
             <div className="form-control mt-2">
               <div className="label">
-                <span className="label-text">End Date</span>
+                <span className="label-text">End Time</span>
               </div>
               <input
-                type="date"
+                type="datetime-local"
                 className="input input-bordered w-full"
                 name="endTime"
                 value={payload.endTime}
                 onChange={onChange}
               />
+            </div>
+
+            <div className="form-control mt-2">
+              <div className="label">
+                <span className="label-text">Excluded Principals</span>
+              </div>
+
+              {excludedPrincipals.map(({ key, principal: exp }) => {
+                const isFilled = exp.length > 0;
+                let [expName, expType] = ['', ''];
+
+                if (isFilled) {
+                  const [_, type, name] = exp.split('#');
+                  expName = name;
+                  expType = type;
+                }
+                return (
+                  <div className="mb-4 form-control" key={key + exp}>
+                    <select
+                      className="select select-bordered w-full"
+                      name="principal"
+                      key={key + payload.target}
+                      value={exp}
+                      onChange={(e) => handleExcludedPrincipalsChange(key, e)}
+                    >
+                      <option
+                        value={isFilled ? exp : ''}
+                        className={isFilled ? 'hidden' : ''}
+                      >
+                        {isFilled
+                          ? `${expName} (${expType})`
+                          : 'Select Principal'}
+                      </option>
+                      {filteredPrincipals?.map((principal) => {
+                        const val = `${principal.id}#${principal.principalType}#${principal.displayName}`;
+                        return (
+                          <option key={principal.id} value={val}>
+                            {principal.displayName} ({principal.principalType})
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn btn-error mt-2 w-full"
+                      onClick={() => removeExcludedPrincipals(key)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
+
+              <button
+                type="button"
+                className="btn btn-accent mt-2"
+                onClick={addExcludedPrincipals}
+              >
+                Add Principal
+              </button>
             </div>
 
             <div className="form-control mt-2">
@@ -209,19 +359,6 @@ export const FreezeTimes = () => {
               )}
             </div>
 
-            <div className="mt-2">
-              <div className="label">
-                <span className="label-text">Note</span>
-              </div>
-              <textarea
-                className="textarea textarea-bordered w-full"
-                placeholder="Note"
-                value={payload.note}
-                name="note"
-                onChange={onChange}
-              ></textarea>
-            </div>
-
             <div className="form-control mt-3">
               <button
                 className="btn btn-primary"
@@ -241,15 +378,15 @@ export const FreezeTimes = () => {
           <thead>
             <tr>
               <th>No.</th>
+              <th>Name</th>
               <th>Creator</th>
               <th>Permission Sets</th>
               <th>Target</th>
+              <th>Excluded</th>
               <th>Status</th>
               <th>Start Date</th>
               <th>End Date</th>
-              <th>Note</th>
-              <th>Created At</th>
-              <th>Updated At</th>
+
               <th>Actions</th>
             </tr>
           </thead>
@@ -261,16 +398,18 @@ export const FreezeTimes = () => {
               let status = 'PENDING';
               let badge = 'badge-warning';
 
-              if (now >= startTime && now < endTime) {
-                status = 'ACTIVE';
-                badge = 'badge-success';
-              } else if (now > endTime) {
+              if (now >= endTime) {
                 status = 'EXPIRED';
                 badge = 'badge-error';
+              } else if (now >= startTime && now < endTime) {
+                status = 'ACTIVE';
+                badge = 'badge-success';
               }
+
               return (
                 <tr key={fz.id}>
                   <td>{idx + 1}</td>
+                  <td>{fz.name}</td>
                   <td>{fz.creator.name}</td>
                   <td>
                     {fz.permissionSets
@@ -285,22 +424,30 @@ export const FreezeTimes = () => {
                   </td>
                   <td>{fz.target}</td>
                   <td>
+                    {fz.excludedPrincipals
+                      ?.map((p) => {
+                        return `${p.displayName}`;
+                      })
+                      .join(', ')}
+                  </td>
+                  <td>
                     <span className={`badge ${badge} badge-outline`}>
                       {status}
                     </span>
                   </td>
-                  <td>{formatDate(fz.startTime, false)}</td>
-                  <td>{formatDate(fz.endTime, false)}</td>
-                  <td>{fz.note ?? '-'}</td>
-                  <td>{formatDate(fz.createdAt)}</td>
-                  <td>{formatDate(fz.updatedAt)}</td>
+                  <td>{formatDate(fz.startTime, true)}</td>
+                  <td>{formatDate(fz.endTime, true)}</td>
+
                   <td>
                     <button
                       className="btn btn-md btn-error"
-                      onClick={() => deleteFreezeTimes({ ids: [fz.id] })}
+                      onClick={() => {
+                        setDeleteId(fz.id);
+                        deleteFreezeTimes({ ids: [fz.id] });
+                      }}
                       disabled={isDeleting}
                     >
-                      {isDeleting && (
+                      {isDeleting && deleteId === fz.id && (
                         <span className="loading loading-spinner"></span>
                       )}
                       Delete

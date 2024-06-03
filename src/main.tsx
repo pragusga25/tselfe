@@ -29,14 +29,10 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
+      <Toaster position="top-center" reverseOrder={false} />
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
           <PersistLogin>
-            <Toaster
-              position="top-center"
-              reverseOrder={false}
-              containerClassName="z-[99999]"
-            />
             <App />
           </PersistLogin>
         </QueryClientProvider>
