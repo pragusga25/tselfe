@@ -72,7 +72,7 @@ export const Settings = () => {
           className="max-w-lg w-full mt-8 lg:mt-0 lg:w-1/2 mx-auto lg:mx-0"
           onSubmit={onSubmitIdentity}
         >
-          <h3>Update Identity & Instance</h3>
+          <h3>Settings</h3>
           <div className="form-control">
             <div className="label">
               <span className="label-text">Identity Store ID</span>
@@ -99,15 +99,39 @@ export const Settings = () => {
               placeholder="Instance ARN"
             />
           </div>
+          <div className="form-control">
+            <div className="label">
+              <span className="label-text">Scheduler Target ARN</span>
+            </div>
+            <input
+              value={identityPayload.schedulerTargetArn}
+              onChange={onChangeIdentity}
+              type="text"
+              className="grow input input-bordered w-full"
+              name="schedulerTargetArn"
+              placeholder="Scheduler Target ARN"
+            />
+          </div>
+          <div className="form-control">
+            <div className="label">
+              <span className="label-text">Scheduler Role ARN</span>
+            </div>
+            <input
+              value={identityPayload.schedulerRoleArn}
+              onChange={onChangeIdentity}
+              type="text"
+              className="grow input input-bordered w-full"
+              name="schedulerRoleArn"
+              placeholder="Scheduler Role ARN"
+            />
+          </div>
 
           <div className="form-control mt-3">
             <button className="btn btn-primary" disabled={isPendingIdentity}>
               {isPendingIdentity && (
                 <span className="loading loading-spinner"></span>
               )}
-              {isUpsertIdentity
-                ? 'Update Identity & Instance'
-                : 'Add Identity & Instance'}
+              Update Settings
             </button>
           </div>
         </form>

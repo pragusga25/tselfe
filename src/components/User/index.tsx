@@ -1,8 +1,10 @@
 import {
   useDeleteAssignmentRequests,
+  useListAwsAccounts,
   useListMyAssignmentRequests,
   useListPermissionSets,
   useMe,
+  useMyListPermissionSets,
   useRequestAssignment,
   useUpdateUserPassword,
 } from '@/hooks';
@@ -10,7 +12,6 @@ import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  PermissionSets,
   RequestAssignmentOperation,
   RequestAssignmentPayload,
   RequestAssignmentStatus,
@@ -20,7 +21,9 @@ import { formatDate } from '@/lib/utils';
 
 export const User = () => {
   const { data } = useMe();
+  const { data: myPs } = useMyListPermissionSets();
   const { data: ps } = useListPermissionSets();
+  const { data: awsAccounts } = useListAwsAccounts();
   const [operation, setOperations] = useState(
     RequestAssignmentOperation.ATTACH
   );
@@ -34,49 +37,36 @@ export const User = () => {
   const initRequestPayload: Required<RequestAssignmentPayload> = {
     operation: RequestAssignmentOperation.ATTACH,
     permissionSetArns: [],
-    principalAwsAccountUserId: '',
+    principalGroupId: data?.memberships[0]?.groupId ?? '',
     note: '',
+    awsAccountId: awsAccounts?.[0]?.id ?? '',
   };
 
   const [requestPayload, setRequestPayload] =
     useState<Required<RequestAssignmentPayload>>(initRequestPayload);
 
+  const filteredAwsAccounts = useMemo(() => {
+    const currentAwsAccounts =
+      myPs?.map((p) => {
+        return p.awsAccountId;
+      }) ?? [];
+
+    const currentAwsAccountsSet = new Set(currentAwsAccounts);
+
+    if (operation === RequestAssignmentOperation.DETACH) {
+      return awsAccounts?.filter((a) => currentAwsAccountsSet.has(a.id)) ?? [];
+    }
+
+    return awsAccounts ?? [];
+  }, [awsAccounts, operation]);
+
   const { data: myAssignmentRequests } = useListMyAssignmentRequests();
-  let options: PermissionSets =
-    ps?.map((p) => ({ arn: p.arn, name: p.name ?? p.arn })) ?? [];
 
-  options = useMemo(() => {
-    return options.filter((p) => {
-      const { principalAwsAccountUserId } = requestPayload;
-      if (principalAwsAccountUserId.length === 0) {
-        return false;
-      }
+  const canRequest = (data?.memberships.length ?? 0) > 0;
 
-      const principal = data?.principalAwsAccountUsers.find(
-        (p) => p.id === principalAwsAccountUserId
-      );
-
-      if (!principal) {
-        return false;
-      }
-
-      const pss = principal.permissionSets.map((p) => p.arn);
-
-      if (operation === RequestAssignmentOperation.ATTACH) {
-        return !pss.includes(p.arn);
-      }
-
-      return pss.includes(p.arn);
-    });
-  }, [
-    data?.principalAwsAccountUsers,
-    operation,
-    requestPayload.principalAwsAccountUserId,
-  ]);
+  const options = ps ?? [];
 
   const isOptionsEmpty = options.length === 0;
-
-  const canRequest = (data?.principalAwsAccountUsers.length ?? 0) > 0;
 
   const {
     mutate: requestMutation,
@@ -88,7 +78,6 @@ export const User = () => {
     useDeleteAssignmentRequests();
 
   const onRequest = () => {
-    // console.log(requestPayload)
     requestMutation({
       ...requestPayload,
       operation,
@@ -105,8 +94,11 @@ export const User = () => {
     <div className="mb-8">
       <section className="border-b-2 pb-4">
         <h2 className="text-2xl font-semibold mb-4">Account</h2>
-        <div className="flex flex-col">
-          <div className="w-full text-justify border-2 p-4">
+        <div className="flex flex-col gap-y-4">
+          <div className="w-full text-justify border-2 p-4 flex flex-col gap-y-4">
+            <p>
+              <strong>Email:</strong> {data?.email}
+            </p>
             <p>
               <strong>Name:</strong> {data?.name}
             </p>
@@ -114,45 +106,72 @@ export const User = () => {
               <strong>Username:</strong> {data?.username}
             </p>
             <p>
-              <strong>Principals:</strong>{' '}
-              {(data?.principalAwsAccountUsers ?? []).length > 0 ? '' : '-'}
+              <strong>Principal Id:</strong> {data?.principalUserId}
             </p>
-            <div className="overflow-x-auto mt-5">
-              <table className="table table-zebra table-md">
-                <thead>
-                  <tr>
-                    <th>Principal ID</th>
-                    <th>Principal Display Name</th>
-                    <th>Principal Type</th>
-                    <th>AWS Account Name</th>
-                    <th>Permission Sets</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data?.principalAwsAccountUsers.map(
-                    ({
-                      awsAccountName,
-                      principalDisplayName,
-                      principalId,
-                      principalType,
-                      id,
-                      permissionSets,
-                    }) => {
-                      return (
-                        <tr key={id}>
-                          <td>{principalId}</td>
-                          <td>{principalDisplayName}</td>
-                          <td>{principalType}</td>
-                          <td>{awsAccountName}</td>
-                          <td>
-                            {permissionSets.map((p) => p.name).join(', ')}
-                          </td>
-                        </tr>
-                      );
-                    }
-                  )}
-                </tbody>
-              </table>
+            <div>
+              <p>
+                <strong>Memberships:</strong> {canRequest ? '' : '-'}
+              </p>
+              <div className="overflow-x-auto mt-5">
+                <table className="table table-zebra table-md">
+                  <thead>
+                    <tr>
+                      <th>Membership ID</th>
+                      <th>Group Name</th>
+                      <th>Group Id</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data?.memberships.map(
+                      ({ groupDisplayName, groupId, membershipId }) => {
+                        return (
+                          <tr key={membershipId}>
+                            <td>{membershipId}</td>
+                            <td>{groupDisplayName}</td>
+                            <td>{groupId}</td>
+                          </tr>
+                        );
+                      }
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <p>
+                <strong>My Permission Sets:</strong> {canRequest ? '' : '-'}
+              </p>
+              <div className="overflow-x-auto mt-5">
+                <table className="table table-zebra table-md">
+                  <thead>
+                    <tr>
+                      <th>Group Name</th>
+                      <th>AWS Account</th>
+                      <th>Permission Sets</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myPs?.map(
+                      ({
+                        awsAccountName,
+                        permissionSets,
+                        principalDisplayName,
+                      }) => {
+                        return (
+                          <tr key={principalDisplayName + awsAccountName}>
+                            <td>{principalDisplayName}</td>
+                            <td>{awsAccountName}</td>
+                            <td>
+                              {permissionSets.map((ps) => ps.name).join(', ')}
+                            </td>
+                          </tr>
+                        );
+                      }
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -227,37 +246,6 @@ export const User = () => {
           {canRequest ? (
             <Modal id="requestAssignment" title="Request Assignment">
               <>
-                <div className="form-control">
-                  <div className="label">
-                    <span className="label-text">AWS Account</span>
-                  </div>
-                  <select
-                    value={requestPayload.principalAwsAccountUserId}
-                    className="select select-bordered w-full"
-                    name="awsAccountId"
-                    onChange={(e) => {
-                      setRequestPayload((prev) => ({
-                        ...prev,
-                        principalAwsAccountUserId: e.target.value,
-                      }));
-                    }}
-                  >
-                    <option value="" disabled hidden key="default">
-                      Select Principal
-                    </option>
-                    {data?.principalAwsAccountUsers.map(
-                      ({ awsAccountName, principalDisplayName, id }) => {
-                        const value = id;
-                        return (
-                          <option value={value} key={value}>
-                            {principalDisplayName} ({awsAccountName})
-                          </option>
-                        );
-                      }
-                    )}
-                  </select>
-                </div>
-
                 <div className="mt-2">
                   <div className="label">
                     <span className="label-text">Choose operation</span>
@@ -277,6 +265,64 @@ export const User = () => {
                         {p}
                       </option>
                     ))}
+                  </select>
+                </div>
+
+                <div className="form-control mt-2">
+                  <div className="label">
+                    <span className="label-text">Group</span>
+                  </div>
+                  <select
+                    value={requestPayload.principalGroupId}
+                    className="select select-bordered w-full"
+                    name="principalGroupId"
+                    onChange={(e) => {
+                      setRequestPayload((prev) => ({
+                        ...prev,
+                        principalGroupId: e.target.value,
+                      }));
+                    }}
+                  >
+                    <option value="" disabled hidden key="default">
+                      Select Group
+                    </option>
+                    {data?.memberships.map(({ groupDisplayName, groupId }) => {
+                      const value = groupId;
+                      return (
+                        <option value={value} key={value}>
+                          {groupDisplayName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div className="form-control">
+                  <div className="label">
+                    <span className="label-text">AWS Account</span>
+                  </div>
+                  <select
+                    value={requestPayload.awsAccountId}
+                    className="select select-bordered w-full"
+                    name="awsAccountId"
+                    onChange={(e) => {
+                      setRequestPayload((prev) => ({
+                        ...prev,
+                        awsAccountId: e.target.value,
+                      }));
+                    }}
+                  >
+                    <option value="" disabled hidden key="default">
+                      Select AWS Account
+                    </option>
+                    {filteredAwsAccounts?.map(({ id, name }) => {
+                      const value = id;
+                      return (
+                        <option value={value} key={value}>
+                          {name}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 

@@ -4,12 +4,17 @@ import { PrincipalGroupsTable } from './PrincipalGroupsTable';
 import { PrincipalUsersTable } from './PrincipalUserssTable';
 import { PrincipalUserModal } from './PrincipalUserModal';
 import { PrincipalGroupModal } from './PrincipalGroupModal';
+import { useSearchParams } from 'react-router-dom';
 
 export const Principals = () => {
+  const [searchParams] = useSearchParams();
+  const typeParam = searchParams.get('type');
+  const isInitUser = typeParam === 'user' || typeParam === 'USER';
+
   const tabLists = [PrincipalType.GROUP, PrincipalType.USER];
 
   const [tabActive, setTabActive] = useState<PrincipalType>(
-    PrincipalType.GROUP
+    isInitUser ? PrincipalType.USER : PrincipalType.GROUP
   );
   const isGroupActive = tabActive === PrincipalType.GROUP;
 

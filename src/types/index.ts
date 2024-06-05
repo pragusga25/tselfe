@@ -72,6 +72,8 @@ export type User = {
   username: string;
   name: string;
   role: Role;
+  email?: string | null;
+  principalUserId?: string | null;
 };
 export interface UserWithTimeStamps extends User {
   createdAt: string;
@@ -95,6 +97,9 @@ export type CreateAccountUserPayload = {
   username: string;
   password: string;
   principalAwsAccountUsers: Omit<PrincipalAccount, 'id'>[];
+};
+export type ResetAccountUserPasswordPayload = {
+  userId: string;
 };
 export type UpdateAccountUserPayload = {
   id: string;
@@ -168,7 +173,8 @@ export type RequestAssignmentPayload = {
   permissionSetArns: string[];
   operation: RequestAssignmentOperation;
   note?: string;
-  principalAwsAccountUserId: string;
+  principalGroupId: string;
+  awsAccountId: string;
 };
 
 export type AcceptAssignmentRequestsPayload = {
@@ -192,14 +198,10 @@ export type RegisterPayload = Omit<UserWithPassword, 'id'>;
 export type RegisterData = IdResponse;
 export type GetUserData = User;
 export type MeData = User & {
-  principalAwsAccountUsers: {
-    principalId: string;
-    principalType: string;
-    awsAccountId: string[];
-    awsAccountName: string[];
-    permissionSets: PermissionSets;
-    principalDisplayName: string;
-    id: string;
+  memberships: {
+    membershipId: string;
+    groupId: string;
+    groupDisplayName: string;
   }[];
 };
 export type ListUsersData = UserWithTimeStamps[];
@@ -207,7 +209,9 @@ export type ListAccountUsersData = {
   id: string;
   name: string;
   username: string;
-  principalAwsAccountUsers: PrincipalAccountDetail[];
+  email?: string | null;
+  principalDisplayName?: string | null;
+  principalId?: string | null;
   createdAt: string;
 }[];
 export type ListAccountAdminsData = {
@@ -282,7 +286,18 @@ export type ListPrincipalsNotInDbData = {
   type: PrincipalType;
 }[];
 export type ListPermissionSetsData = PermissionSets;
-export type ListMyPermissionSetsData = PrincipalAwsAccountUserDetail[];
+export type ListMyPermissionSetsData = {
+  principalId: string;
+  principalType: PrincipalType;
+  permissionSets: {
+    arn: string;
+    name: string | null;
+  }[];
+  awsAccountId: string;
+  awsAccountName: string;
+  principalDisplayName: string;
+  id: string;
+}[];
 type AssignmentRequestData = {
   id: string;
   permissionSets: PermissionSets;
@@ -329,6 +344,8 @@ export type ListAssignmentRequestsData = AssignmentRequestWithRequesterData[];
 export type GetIdentityInstanceData = {
   instanceArn: string;
   identityStoreId: string;
+  schedulerTargetArn?: string | null;
+  schedulerRoleArn?: string | null;
 };
 export type UpsertIdentityInstancePayload = GetIdentityInstanceData;
 export type ListFreezeTimesData = {

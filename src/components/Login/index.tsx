@@ -31,7 +31,7 @@ export const Login = () => {
             <input
               type="text"
               className="grow"
-              placeholder="Username"
+              placeholder="Username or email"
               name="username"
               value={username}
               onChange={onUsernameChange}

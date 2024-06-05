@@ -56,13 +56,13 @@ export const useListPrincipals = () => {
 
 export const useListAwsAccounts = () => {
   const {
-    auth: { accessToken, user },
+    auth: { accessToken },
   } = useAuth();
 
   const query = useQuery({
     queryKey: ['aws-accounts.list'],
     queryFn: () => listAwsAccounts(accessToken),
-    enabled: user?.role === Role.ADMIN,
+    enabled: !!accessToken,
   });
 
   return query;

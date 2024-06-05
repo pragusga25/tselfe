@@ -7,6 +7,7 @@ import {
 import { PrincipalType, UpdatePrincipalGroupPayload } from '@/types';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { DeleteModal } from '../Modal/DeleteModal';
+import { useSearchParams } from 'react-router-dom';
 
 export const PrincipalGroupsTable = () => {
   const {
@@ -110,6 +111,21 @@ export const PrincipalGroupsTable = () => {
     setMemberships([]);
   };
 
+  const [searchParams] = useSearchParams();
+  const idParam = searchParams.get('id');
+
+  useEffect(() => {
+    if (idParam && !isGroupsLoading) {
+      const el = document.getElementById(idParam);
+      if (el) {
+        el.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }
+    }
+  }, [idParam, isGroupsLoading]);
+
   useEffect(() => {
     if (updated) {
       resetUpdatePayload();
@@ -192,7 +208,11 @@ export const PrincipalGroupsTable = () => {
                   )
               );
               return (
-                <tr key={id}>
+                <tr
+                  key={id}
+                  id={id}
+                  className={id === idParam ? 'text-info' : ''}
+                >
                   <td>{idx + 1}</td>
                   {/* <td>{id}</td> */}
                   <td>
@@ -233,9 +253,15 @@ export const PrincipalGroupsTable = () => {
                       } `}
                     >
                       {filteredMemberships.map(
-                        ({ membershipId, userDisplayName }) => (
+                        ({ membershipId, userDisplayName, userId }) => (
                           <li key={membershipId} className="h-fit mb-2">
-                            <span>{userDisplayName}</span>
+                            <a
+                              href={`/principals?type=USER&id=${userId}`}
+                              className="link"
+                            >
+                              <span>{userDisplayName}</span>
+                            </a>
+
                             {isUpdatingCurrentData && (
                               <button
                                 className="hover:bg-red-600 flex items-center justify-center bg-red-400 w-8 h-8 text-center text-white rounded-full float-right"

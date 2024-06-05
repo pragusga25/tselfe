@@ -9,6 +9,8 @@ import {
   listAccountAdmins,
   listAccountUsers,
   listUsers,
+  resetAccountUserPassword,
+  synchronizeAccountUser,
   updateAccountUser,
   updateUserPassword,
   updateUserPrincipal,
@@ -19,13 +21,14 @@ import {
   CreateUserPayload,
   DeleteUsersPayload,
   PrincipalType,
+  ResetAccountUserPasswordPayload,
   Role,
   UpdateAccountUserPayload,
   UpdateUserPasswordPayload,
   UpdateUserPrincipalPayload,
 } from '@/types';
 import toast from 'react-hot-toast';
-import { ChangeEvent, FormEvent, useState } from 'react';
+import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
 
 export const useListUsers = () => {
   const {
@@ -51,7 +54,28 @@ export const useListAccountUsers = () => {
     enabled: user?.role === Role.ADMIN,
   });
 
-  return query;
+  const [search, setSearch] = useState('');
+
+  const searchResult = useMemo(() => {
+    return query.data?.filter(({ name, username, email }) => {
+      const searchText = (name + ' ' + username + ' ' + email).toLowerCase();
+
+      const searchLower = search.toLowerCase();
+
+      return searchText.includes(searchLower);
+    });
+  }, [query.data, search]);
+
+  const onSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  return {
+    ...query,
+    searchResult,
+    onSearch,
+    search,
+  };
 };
 
 export const useListAccountAdmins = () => {
@@ -105,6 +129,30 @@ export const useUpdateAccountUser = () => {
         loading: 'Updating user...',
         success: 'User updated successfully',
         error: 'Error updating user',
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['users.list'],
+      });
+    },
+  });
+
+  return mutation;
+};
+
+export const useSynchronizeAccountUser = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationKey: ['users.synchronize'],
+    mutationFn: () =>
+      toast.promise(synchronizeAccountUser(accessToken), {
+        loading: 'Synchronizing user...',
+        success: 'User synchronized successfully',
+        error: 'Error synchronizing user',
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -275,6 +323,25 @@ export const useCreateAccountUser = () => {
         queryKey: ['users.list'],
       });
     },
+  });
+
+  return mutation;
+};
+
+export const useResetAccountUserPassword = () => {
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationKey: ['users.password.reset'],
+    mutationFn: (payload: ResetAccountUserPasswordPayload) =>
+      toast.promise(resetAccountUserPassword(payload, accessToken), {
+        loading: 'Resetting password...',
+        success: 'User password reset successfully',
+        error: 'Error resetting user password',
+      }),
+    onSuccess: async () => {},
   });
 
   return mutation;

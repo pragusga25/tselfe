@@ -45,6 +45,8 @@ export const useUpsertIdentityInstance = () => {
   const [payload, setPayload] = useState({
     identityStoreId: data?.identityStoreId ?? '',
     instanceArn: data?.instanceArn ?? '',
+    schedulerTargetArn: data?.schedulerTargetArn ?? undefined,
+    schedulerRoleArn: data?.schedulerRoleArn ?? undefined,
   });
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +64,8 @@ export const useUpsertIdentityInstance = () => {
       setPayload({
         identityStoreId: '',
         instanceArn: '',
+        schedulerTargetArn: undefined,
+        schedulerRoleArn: undefined,
       });
     }
   };
@@ -71,6 +75,8 @@ export const useUpsertIdentityInstance = () => {
       setPayload({
         identityStoreId: data.identityStoreId,
         instanceArn: data.instanceArn,
+        schedulerTargetArn: data.schedulerTargetArn ?? undefined,
+        schedulerRoleArn: data.schedulerRoleArn ?? undefined,
       });
     }
   }, [data]);

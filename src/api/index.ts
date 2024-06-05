@@ -58,6 +58,7 @@ import {
   RejectAssignmentRequestsPayload,
   RequestAssignmentData,
   RequestAssignmentPayload,
+  ResetAccountUserPasswordPayload,
   UpdateAccountUserData,
   UpdateAccountUserPayload,
   UpdatePrincipalData,
@@ -344,6 +345,33 @@ export const createAccountUser = (
     })
     .then((res) => res.data.result);
 
+export const resetAccountUserPassword = (
+  data: ResetAccountUserPasswordPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/users.password.reset`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const synchronizeAccountUser = (
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(
+      `/users.synchronize`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    )
+    .then((res) => res.data.result);
+
 export const updateAccountUser = (
   data: UpdateAccountUserPayload,
   accessToken?: string
@@ -567,7 +595,7 @@ export const updateUserPassword = (
   accessToken?: string
 ): Promise<UpdateUserPasswordData> =>
   api
-    .post(`/users.password.update`, data, {
+    .post(`/accounts.password.update`, data, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

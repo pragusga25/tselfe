@@ -1,5 +1,4 @@
 import { useCreateAccountAdmin } from '@/hooks';
-import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { CreateAccountAdminPayload } from '@/types';
@@ -37,12 +36,6 @@ export const AccountAdminModal = () => {
 
   return (
     <>
-      <ModalButton
-        id="createAdminModal"
-        text="Create Admin"
-        className="btn-primary btn-md"
-      />
-
       <Modal id="createAdminModal" title="Create Admin">
         <form className="flex flex-col space-y-4" onSubmit={onSubmit}>
           <div className="form-control">

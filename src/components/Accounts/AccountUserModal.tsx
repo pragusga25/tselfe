@@ -3,7 +3,6 @@ import {
   useListAwsAccounts,
   useListPrincipals,
 } from '@/hooks';
-import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { CreateAccountUserPayload, PrincipalType } from '@/types';
@@ -109,12 +108,6 @@ export const AccountUserModal = () => {
 
   return (
     <>
-      <ModalButton
-        id="createUserModal"
-        text="Create User"
-        className="btn-primary btn-md"
-      />
-
       <Modal id="createUserModal" title="Create User">
         <form className="flex flex-col space-y-4" onSubmit={onSubmit}>
           <div className="form-control">
