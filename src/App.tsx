@@ -11,6 +11,8 @@ import { FreezeTimes } from './components/FreezeTimes';
 import { Settings } from './components/Settings';
 import { Role } from './types';
 import { Principals } from './components/Principals';
+import { Logs } from './components/Logs';
+import { Approvers } from './components/Approvers';
 
 function App() {
   const {
@@ -26,10 +28,12 @@ function App() {
             <Route path="/" element={<Assignments />} />
             <Route path="/assignments" element={<Assignments />} />
             <Route path="/accounts" element={<Accounts />} />
+            <Route path="/approvers" element={<Approvers />} />
             <Route path="/requests" element={<AssignmentRequests />} />
             <Route path="/freezes" element={<FreezeTimes />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/principals" element={<Principals />} />
+            <Route path="/logs" element={<Logs />} />
           </>
         </Route>
       ) : null}

@@ -11,3 +11,4 @@ export * from './usePermissionSets';
 export * from './useFreezeTimes';
 export * from './useIdentityInstance';
 export * from './useDebounce';
+export * from './useLogs';

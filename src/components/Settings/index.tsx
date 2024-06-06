@@ -75,7 +75,12 @@ export const Settings = () => {
           <h3>Settings</h3>
           <div className="form-control">
             <div className="label">
-              <span className="label-text">Identity Store ID</span>
+              <span
+                className="label-text tooltip underline"
+                data-tip="The globally unique identifier for the identity store, such as d-1234567890. In this example, d- is a fixed prefix, and 1234567890 is a randomly generated string that contains numbers and lower case letters. This value is generated at the time that a new identity store is created."
+              >
+                Identity Store ID
+              </span>
             </div>
             <input
               value={identityPayload.identityStoreId}
@@ -88,7 +93,12 @@ export const Settings = () => {
           </div>
           <div className="form-control">
             <div className="label">
-              <span className="label-text">Instance ARN</span>
+              <span
+                className="label-text tooltip underline"
+                data-tip="The ARN of the IAM Identity Center instance under which the operation will be executed."
+              >
+                Instance ARN
+              </span>
             </div>
             <input
               value={identityPayload.instanceArn}
@@ -101,7 +111,12 @@ export const Settings = () => {
           </div>
           <div className="form-control">
             <div className="label">
-              <span className="label-text">Scheduler Target ARN</span>
+              <span
+                className="label-text tooltip underline"
+                data-tip="The Amazon Resource Name (ARN) of the target."
+              >
+                Scheduler Target ARN
+              </span>
             </div>
             <input
               value={identityPayload.schedulerTargetArn}
@@ -114,7 +129,12 @@ export const Settings = () => {
           </div>
           <div className="form-control">
             <div className="label">
-              <span className="label-text">Scheduler Role ARN</span>
+              <span
+                className="label-text tooltip underline"
+                data-tip="The Amazon Resource Name (ARN) of the IAM role that EventBridge Scheduler will use for this target when the schedule is invoked."
+              >
+                Scheduler Role ARN
+              </span>
             </div>
             <input
               value={identityPayload.schedulerRoleArn}

@@ -406,6 +406,8 @@ export const FreezeTimes = () => {
                 badge = 'badge-success';
               }
 
+              const isActive = status === 'ACTIVE';
+
               return (
                 <tr key={fz.id}>
                   <td>{idx + 1}</td>
@@ -439,19 +441,21 @@ export const FreezeTimes = () => {
                   <td>{formatDate(fz.endTime, true)}</td>
 
                   <td>
-                    <button
-                      className="btn btn-md btn-error"
-                      onClick={() => {
-                        setDeleteId(fz.id);
-                        deleteFreezeTimes({ ids: [fz.id] });
-                      }}
-                      disabled={isDeleting}
-                    >
-                      {isDeleting && deleteId === fz.id && (
-                        <span className="loading loading-spinner"></span>
-                      )}
-                      Delete
-                    </button>
+                    {!isActive && (
+                      <button
+                        className="btn btn-md btn-error"
+                        onClick={() => {
+                          setDeleteId(fz.id);
+                          deleteFreezeTimes({ ids: [fz.id] });
+                        }}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting && deleteId === fz.id && (
+                          <span className="loading loading-spinner"></span>
+                        )}
+                        Delete
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

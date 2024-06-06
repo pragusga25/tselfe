@@ -2,12 +2,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import {
   createAccountAdmin,
+  createAccountAdminBulk,
   createAccountUser,
+  createApprovers,
   createUser,
+  deleteApprover,
   deleteUsers,
   getMe,
   listAccountAdmins,
   listAccountUsers,
+  listApprovers,
   listUsers,
   resetAccountUserPassword,
   synchronizeAccountUser,
@@ -16,9 +20,12 @@ import {
   updateUserPrincipal,
 } from '@/api';
 import {
+  CreateAccountAdminBulkPayload,
   CreateAccountAdminPayload,
   CreateAccountUserPayload,
+  CreateApproversPayload,
   CreateUserPayload,
+  DeleteApproverPayload,
   DeleteUsersPayload,
   PrincipalType,
   ResetAccountUserPasswordPayload,
@@ -89,7 +96,28 @@ export const useListAccountAdmins = () => {
     enabled: user?.role === Role.ADMIN,
   });
 
-  return query;
+  const [search, setSearch] = useState('');
+
+  const searchResult = useMemo(() => {
+    return query.data?.filter(({ name, username, email }) => {
+      const searchText = (name + ' ' + username + ' ' + email).toLowerCase();
+
+      const searchLower = search.toLowerCase();
+
+      return searchText.includes(searchLower);
+    });
+  }, [query.data, search]);
+
+  const onSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  return {
+    ...query,
+    searchResult,
+    onSearch,
+    search,
+  };
 };
 
 export const useCreateUser = () => {
@@ -369,4 +397,124 @@ export const useCreateAccountAdmin = () => {
   });
 
   return mutation;
+};
+
+export const useCreateAccountAdminBulk = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationKey: ['admins.create-bulk'],
+    mutationFn: (payload: CreateAccountAdminBulkPayload) =>
+      toast.promise(createAccountAdminBulk(payload, accessToken), {
+        loading: 'Creating admins...',
+        success: 'Admins created successfully',
+        error: 'Error creating admins',
+      }),
+    onSuccess: async () => {
+      // await queryClient.invalidateQueries({
+      //   queryKey: ['admins.list'],
+      // });
+      // await queryClient.invalidateQueries({
+      //   queryKey: ['users.list'],
+      // });
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['users.list'],
+          refetchType: 'all',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['admins.list'],
+        }),
+      ]);
+    },
+  });
+
+  return mutation;
+};
+
+export const useCreateApprovers = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationKey: ['approvers.create'],
+    mutationFn: (payload: CreateApproversPayload) =>
+      toast.promise(createApprovers(payload, accessToken), {
+        loading: 'Creating approvers...',
+        success: 'Approvers created successfully',
+        error: 'Error creating approvers',
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['approvers.list'],
+      });
+    },
+  });
+
+  return mutation;
+};
+
+export const useDeleteApprover = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+
+  const mutation = useMutation({
+    mutationKey: ['approvers.delete'],
+    mutationFn: (payload: DeleteApproverPayload) =>
+      toast.promise(deleteApprover(payload, accessToken), {
+        loading: 'Deleting approver...',
+        success: 'Approver deleted successfully',
+        error: 'Error deleting approver',
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['approvers.list'],
+      });
+    },
+  });
+
+  return mutation;
+};
+
+export const useListApprovers = () => {
+  const {
+    auth: { accessToken, user },
+  } = useAuth();
+
+  const query = useQuery({
+    queryKey: ['approvers.list'],
+    queryFn: () => listApprovers(accessToken),
+    enabled: user?.role === Role.ADMIN,
+  });
+
+  const [search, setSearch] = useState('');
+
+  const searchResult = useMemo(() => {
+    return query.data?.filter(({ name, username, email }) => {
+      const searchText = (name + ' ' + username + ' ' + email).toLowerCase();
+
+      const searchLower = search.toLowerCase();
+
+      return searchText.includes(searchLower);
+    });
+  }, [query.data, search]);
+
+  const onSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  return {
+    ...query,
+    searchResult,
+    onSearch,
+    search,
+  };
 };

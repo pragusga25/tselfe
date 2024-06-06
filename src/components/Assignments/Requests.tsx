@@ -21,7 +21,7 @@ export const AssignmentRequests = () => {
       <h1 className="text-2xl font-bold mb-6">Assignment Requests</h1>
 
       <div className="overflow-x-auto">
-        <table className="table table-zebra table-md">
+        <table className="table table-zebra table-sm">
           <thead>
             <tr>
               <th>No.</th>
@@ -46,7 +46,6 @@ export const AssignmentRequests = () => {
                 operation,
                 awsAccountName,
                 principalDisplayName,
-                principalType,
               } = req;
               if (status === RequestAssignmentStatus.ACCEPTED) {
                 badge = 'badge-success';
@@ -61,16 +60,14 @@ export const AssignmentRequests = () => {
               const ableToDelete =
                 req.status !== RequestAssignmentStatus.PENDING;
 
-              const { name, username } = req.requester;
+              const { name } = req.requester;
 
               return (
                 <tr key={req.id}>
                   <td>{idx + 1}</td>
+                  <td>{name}</td>
                   <td>
-                    {name} (@{username})
-                  </td>
-                  <td>
-                    {principalDisplayName} ({principalType}) - {awsAccountName}
+                    {principalDisplayName} in {awsAccountName} Account
                   </td>
                   <td>
                     {req.permissionSets
@@ -95,15 +92,7 @@ export const AssignmentRequests = () => {
                     </span>
                   </td>
                   <td>{formatDate(req.requestedAt)}</td>
-                  <td>
-                    {req.responder ? (
-                      <>
-                        {req.responder.name} (@{req.responder.username})
-                      </>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
+                  <td>{req.responder ? <>{req.responder.name}</> : '-'}</td>
                   <td>{req.respondedAt ? formatDate(req.respondedAt) : '-'}</td>
                   <td className="flex flex-col">
                     {ableToDelete ? (

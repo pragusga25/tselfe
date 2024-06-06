@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { Role } from '@/types';
-import { AccountUserModal } from './AccountUserModal';
-import { AccountAdminModal } from './AccountAdminModal';
 import { AccountUserTable } from './AccountUserTable';
 import { AccountAdminTable } from './AccountAdminTable';
 import { ModalButton } from '../Modal/ModalButton';
@@ -24,6 +22,9 @@ export const Accounts = () => {
       <h1 className="text-2xl font-bold mb-6">
         List {isUserActive ? 'User' : 'Admin'}
       </h1>
+      <p className="text-info text-justify mb-2">
+        The default password for user is <code>{`<username>tsel889900!`}</code>
+      </p>
       <div className="flex justify-end mb-2">
         {isUserActive && (
           <button
@@ -41,12 +42,11 @@ export const Accounts = () => {
         )}
         {!isUserActive && (
           <ModalButton
-            id={'createAdminModal'}
+            id={'create-admin-modal'}
             text={'Create Admin'}
             className="btn-primary btn-md"
           />
         )}
-        {isUserActive ? <AccountUserModal /> : <AccountAdminModal />}
       </div>
       <div role="tablist" className="tabs tabs-boxed my-4">
         {tabLists.map((tab) => (

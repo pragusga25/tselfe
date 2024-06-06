@@ -8,6 +8,8 @@ export const Navbar = () => {
     'Requests',
     'Principals',
     'Accounts',
+    'Approvers',
+    'Logs',
     'Settings',
   ];
   const { data } = useMe();

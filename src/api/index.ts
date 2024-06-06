@@ -3,10 +3,12 @@ import {
   AcceptAssignmentRequestsPayload,
   CountAssignmentRequestsData,
   CountAssignmentRequestsQuery,
+  CreateAccountAdminBulkPayload,
   CreateAccountAdminData,
   CreateAccountAdminPayload,
   CreateAccountUserData,
   CreateAccountUserPayload,
+  CreateApproversPayload,
   CreateAssignmentData,
   CreateAssignmentPayload,
   CreateFreezeTimeData,
@@ -19,6 +21,7 @@ import {
   CreatePrincipalUserPayload,
   CreateUserData,
   CreateUserPayload,
+  DeleteApproverPayload,
   DeleteAssignmentData,
   DeleteAssignmentPayload,
   DeleteAssignmentRequestsData,
@@ -33,12 +36,14 @@ import {
   GetIdentityInstanceData,
   ListAccountAdminsData,
   ListAccountUsersData,
+  ListApproversData,
   ListAssignmentGroupsData,
   ListAssignmentRequestsData,
   ListAssignmentUsersData,
   ListAssignmentsData,
   ListAwsAccountsData,
   ListFreezeTimesData,
+  ListLogsData,
   ListMyAssignmentRequestsData,
   ListMyPermissionSetsData,
   ListPermissionSetsData,
@@ -396,6 +401,53 @@ export const createAccountAdmin = (
     })
     .then((res) => res.data.result);
 
+export const createAccountAdminBulk = (
+  data: CreateAccountAdminBulkPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/admins.create-bulk`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const createApprovers = (
+  data: CreateApproversPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/approvers.create`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const deleteApprover = (
+  data: DeleteApproverPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/approvers.delete`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const listApprovers = (
+  accessToken?: string
+): Promise<ListApproversData> =>
+  api
+    .get(`/approvers.list`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
 export const listPermissionSets = (
   accessToken?: string
 ): Promise<ListPermissionSetsData> =>
@@ -692,6 +744,15 @@ export const deletePrincipal = (
 ): Promise<DeletePrincipalData> =>
   api
     .post(`/principals.delete`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const listLogs = (accessToken?: string): Promise<ListLogsData> =>
+  api
+    .get(`/logs.list`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

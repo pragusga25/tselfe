@@ -119,6 +119,16 @@ export type CreateAccountAdminPayload = {
   username: string;
   password: string;
 };
+export type CreateAccountAdminBulkPayload = {
+  principalUserIds: string[];
+};
+export type CreateApproversPayload = {
+  principalUserIds: string[];
+};
+export type DeleteApproverPayload = {
+  userId: string;
+};
+export type ListApproversData = (ListAccountUsersData[0] & { role: Role })[];
 export type CreateAccountAdminData = IdResponse;
 export type CreatePrincipalPayload = {
   displayName: string;
@@ -213,13 +223,9 @@ export type ListAccountUsersData = {
   principalDisplayName?: string | null;
   principalId?: string | null;
   createdAt: string;
+  isRoot: boolean;
 }[];
-export type ListAccountAdminsData = {
-  id: string;
-  name: string;
-  username: string;
-  createdAt: string;
-}[];
+export type ListAccountAdminsData = ListAccountUsersData;
 export type CreateUserData = IdResponse;
 export type RequestAssignmentData = IdResponse;
 export type AcceptAssignmentRequestsData = OkResponse;
@@ -261,6 +267,11 @@ export type PrincipalUser = {
 //   principalType: PrincipalType;
 // }[];
 export type ListPrincipalsData = PrincipalGroup[] | PrincipalUser[];
+export type ListLogsData = {
+  id: string;
+  createdAt: string;
+  message: string;
+}[];
 export type AwsAccount = {
   id: string;
   name: string;
