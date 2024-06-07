@@ -451,9 +451,23 @@ export const useCreateApprovers = () => {
         error: 'Error creating approvers',
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['approvers.list'],
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['approvers.list'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['users.me'],
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['assignment-requests.count'],
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['assignment-requests.list'],
+          refetchType: 'active',
+        }),
+      ]);
     },
   });
 
@@ -475,9 +489,23 @@ export const useDeleteApprover = () => {
         error: 'Error deleting approver',
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['approvers.list'],
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['approvers.list'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['users.me'],
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['assignment-requests.count'],
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['assignment-requests.list'],
+          refetchType: 'active',
+        }),
+      ]);
     },
   });
 

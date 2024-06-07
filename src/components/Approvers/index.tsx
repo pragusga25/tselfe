@@ -11,6 +11,7 @@ import { GroupMembershipModal } from '../Modal/GroupMembershipModal';
 export const Approvers = () => {
   const { data, search, searchResult, onSearch, isLoading } =
     useListApprovers();
+
   const {
     auth: { user },
   } = useAuth();

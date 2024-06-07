@@ -34,6 +34,8 @@ export const User = () => {
     onSubmitPassword,
   } = useUpdateUserPassword();
 
+  const [showAccountInfo, setShowAccountInfo] = useState(true);
+
   const initRequestPayload: Required<RequestAssignmentPayload> = {
     operation: RequestAssignmentOperation.ATTACH,
     permissionSetArns: [],
@@ -68,6 +70,8 @@ export const User = () => {
 
   const isOptionsEmpty = options.length === 0;
 
+  const toggleShowAccountInfo = () => setShowAccountInfo((prev) => !prev);
+
   const {
     mutate: requestMutation,
     isPending: isRequesting,
@@ -92,138 +96,148 @@ export const User = () => {
   }, [requested]);
   return (
     <div className="mb-8">
-      <section className="border-b-2 pb-4">
-        <h2 className="text-2xl font-semibold mb-4">Account</h2>
-        <div className="flex flex-col gap-y-4">
-          <div className="w-full text-justify border-2 p-4 flex flex-col gap-y-4">
-            <p>
-              <strong>Email:</strong> {data?.email}
-            </p>
-            <p>
-              <strong>Name:</strong> {data?.name}
-            </p>
-            <p>
-              <strong>Username:</strong> {data?.username}
-            </p>
-            <p>
-              <strong>Principal Id:</strong> {data?.principalUserId}
-            </p>
-            <div>
+      <button
+        onClick={toggleShowAccountInfo}
+        className={`btn btn-sm mb-4 flex justify-start ${
+          showAccountInfo ? 'btn-error' : 'btn-primary'
+        }`}
+      >
+        {showAccountInfo ? 'Hide Account' : 'Show Account'}
+      </button>
+      {showAccountInfo && (
+        <section className="border-b-2 pb-4">
+          <h2 className="text-2xl font-semibold mb-4">Account</h2>
+          <div className="flex flex-col gap-y-4">
+            <div className="w-full text-justify border-2 p-4 flex flex-col gap-y-4">
               <p>
-                <strong>Memberships:</strong> {canRequest ? '' : '-'}
+                <strong>Email:</strong> {data?.email}
               </p>
-              <div className="overflow-x-auto mt-5">
-                <table className="table table-zebra table-md">
-                  <thead>
-                    <tr>
-                      <th>Membership ID</th>
-                      <th>Group Name</th>
-                      <th>Group Id</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data?.memberships.map(
-                      ({ groupDisplayName, groupId, membershipId }) => {
-                        return (
-                          <tr key={membershipId}>
-                            <td>{membershipId}</td>
-                            <td>{groupDisplayName}</td>
-                            <td>{groupId}</td>
-                          </tr>
-                        );
-                      }
-                    )}
-                  </tbody>
-                </table>
+              <p>
+                <strong>Name:</strong> {data?.name}
+              </p>
+              <p>
+                <strong>Username:</strong> {data?.username}
+              </p>
+              <p>
+                <strong>Principal Id:</strong> {data?.principalUserId}
+              </p>
+              <div>
+                <p>
+                  <strong>Memberships:</strong> {canRequest ? '' : '-'}
+                </p>
+                <div className="overflow-x-auto mt-5">
+                  <table className="table table-zebra table-md">
+                    <thead>
+                      <tr>
+                        <th>Membership ID</th>
+                        <th>Group Name</th>
+                        <th>Group Id</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data?.memberships.map(
+                        ({ groupDisplayName, groupId, membershipId }) => {
+                          return (
+                            <tr key={membershipId}>
+                              <td>{membershipId}</td>
+                              <td>{groupDisplayName}</td>
+                              <td>{groupId}</td>
+                            </tr>
+                          );
+                        }
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <p>
+                  <strong>My Permission Sets:</strong> {canRequest ? '' : '-'}
+                </p>
+                <div className="overflow-x-auto mt-5">
+                  <table className="table table-zebra table-md">
+                    <thead>
+                      <tr>
+                        <th>Group Name</th>
+                        <th>AWS Account</th>
+                        <th>Permission Sets</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {myPs?.map(
+                        ({
+                          awsAccountName,
+                          permissionSets,
+                          principalDisplayName,
+                        }) => {
+                          return (
+                            <tr key={principalDisplayName + awsAccountName}>
+                              <td>{principalDisplayName}</td>
+                              <td>{awsAccountName}</td>
+                              <td>
+                                {permissionSets.map((ps) => ps.name).join(', ')}
+                              </td>
+                            </tr>
+                          );
+                        }
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
-            <div>
-              <p>
-                <strong>My Permission Sets:</strong> {canRequest ? '' : '-'}
-              </p>
-              <div className="overflow-x-auto mt-5">
-                <table className="table table-zebra table-md">
-                  <thead>
-                    <tr>
-                      <th>Group Name</th>
-                      <th>AWS Account</th>
-                      <th>Permission Sets</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {myPs?.map(
-                      ({
-                        awsAccountName,
-                        permissionSets,
-                        principalDisplayName,
-                      }) => {
-                        return (
-                          <tr key={principalDisplayName + awsAccountName}>
-                            <td>{principalDisplayName}</td>
-                            <td>{awsAccountName}</td>
-                            <td>
-                              {permissionSets.map((ps) => ps.name).join(', ')}
-                            </td>
-                          </tr>
-                        );
-                      }
-                    )}
-                  </tbody>
-                </table>
+            <form
+              className="flex flex-col w-full max-w-lg mx-auto mt-5"
+              onSubmit={onSubmitPassword}
+            >
+              <h3>Change Password</h3>
+              <div className="form-control">
+                <div className="label">
+                  <span className="label-text">Current Password</span>
+                </div>
+                <input
+                  value={passwordPayload.oldPassword}
+                  onChange={onChangePassword}
+                  type="password"
+                  className="grow input input-bordered w-full"
+                  name="oldPassword"
+                  placeholder="Your current password"
+                  autoComplete="current-password"
+                />
               </div>
-            </div>
+              <div className="form-control">
+                <div className="label">
+                  <span className="label-text">New Password</span>
+                </div>
+                <input
+                  value={passwordPayload.newPassword}
+                  onChange={onChangePassword}
+                  type="password"
+                  className="grow input input-bordered w-full"
+                  name="newPassword"
+                  placeholder="Your new password"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="form-control mt-3">
+                <button
+                  className="btn btn-primary"
+                  disabled={isUpdatingPassword}
+                  type="submit"
+                >
+                  {isUpdatingPassword && (
+                    <span className="loading loading-spinner"></span>
+                  )}
+                  Change Password
+                </button>
+              </div>
+            </form>
           </div>
-
-          <form
-            className="flex flex-col w-full max-w-lg mx-auto mt-5"
-            onSubmit={onSubmitPassword}
-          >
-            <h3>Change Password</h3>
-            <div className="form-control">
-              <div className="label">
-                <span className="label-text">Current Password</span>
-              </div>
-              <input
-                value={passwordPayload.oldPassword}
-                onChange={onChangePassword}
-                type="password"
-                className="grow input input-bordered w-full"
-                name="oldPassword"
-                placeholder="Your current password"
-                autoComplete="current-password"
-              />
-            </div>
-            <div className="form-control">
-              <div className="label">
-                <span className="label-text">New Password</span>
-              </div>
-              <input
-                value={passwordPayload.newPassword}
-                onChange={onChangePassword}
-                type="password"
-                className="grow input input-bordered w-full"
-                name="newPassword"
-                placeholder="Your new password"
-                autoComplete="new-password"
-              />
-            </div>
-
-            <div className="form-control mt-3">
-              <button
-                className="btn btn-primary"
-                disabled={isUpdatingPassword}
-                type="submit"
-              >
-                {isUpdatingPassword && (
-                  <span className="loading loading-spinner"></span>
-                )}
-                Change Password
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="mt-4">
         <h2 className="text-2xl font-semibold mb-4">Assignment Requests</h2>

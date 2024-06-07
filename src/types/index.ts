@@ -74,6 +74,8 @@ export type User = {
   role: Role;
   email?: string | null;
   principalUserId?: string | null;
+  isApprover: boolean;
+  isRoot: boolean;
 };
 export interface UserWithTimeStamps extends User {
   createdAt: string;
@@ -268,10 +270,13 @@ export type PrincipalUser = {
 // }[];
 export type ListPrincipalsData = PrincipalGroup[] | PrincipalUser[];
 export type ListLogsData = {
-  id: string;
-  createdAt: string;
-  message: string;
-}[];
+  result: {
+    id: string;
+    createdAt: string;
+    message: string;
+  }[];
+  nextCursor?: number;
+};
 export type AwsAccount = {
   id: string;
   name: string;

@@ -13,6 +13,7 @@ import { Role } from './types';
 import { Principals } from './components/Principals';
 import { Logs } from './components/Logs';
 import { Approvers } from './components/Approvers';
+import { NotFound } from './components/NotFound';
 
 function App() {
   const {
@@ -27,9 +28,9 @@ function App() {
           <>
             <Route path="/" element={<Assignments />} />
             <Route path="/assignments" element={<Assignments />} />
+            <Route path="/requests" element={<AssignmentRequests />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/approvers" element={<Approvers />} />
-            <Route path="/requests" element={<AssignmentRequests />} />
             <Route path="/freezes" element={<FreezeTimes />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/principals" element={<Principals />} />
@@ -41,6 +42,8 @@ function App() {
         <Route element={<Layout />}>
           <>
             <Route path="/" element={<User />} />
+            <Route path="/settings" element={<User />} />
+            <Route path="/requests" element={<AssignmentRequests />} />
           </>
         </Route>
       ) : null}
@@ -48,6 +51,7 @@ function App() {
       <Route element={<RedirectAuthenticated />}>
         <Route path="/login" element={<Login />} />
       </Route>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

@@ -32,6 +32,7 @@ import {
   Role,
 } from '@/types';
 import { ChangeEvent, useMemo, useState } from 'react';
+import { useMe } from './useUsers';
 
 export const useListAssignments = () => {
   const {
@@ -215,22 +216,24 @@ export const useListMyAssignmentRequests = () => {
   return query;
 };
 
-export const useListAssignmentRequests = (enabled = true) => {
+export const useListAssignmentRequests = () => {
+  const { data: user } = useMe();
   const {
     auth: { accessToken },
   } = useAuth();
   const query = useQuery({
     queryKey: ['assignment-requests.list'],
     queryFn: () => listAssignmentRequests(accessToken),
-    enabled,
+    enabled: !!user?.isApprover || user?.isApprover,
   });
 
   return query;
 };
 
 export const useCountAssignmentRequests = () => {
+  const { data: user } = useMe();
   const {
-    auth: { accessToken, user },
+    auth: { accessToken },
   } = useAuth();
   const query = useQuery({
     queryKey: ['assignment-requests.count'],
@@ -241,7 +244,7 @@ export const useCountAssignmentRequests = () => {
         },
         accessToken
       ),
-    enabled: user?.role === Role.ADMIN,
+    enabled: !!user?.isApprover || user?.isApprover,
   });
 
   return query;

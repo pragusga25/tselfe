@@ -2,13 +2,16 @@ import {
   useAcceptAssignmentRequests,
   useDeleteAssignmentRequests,
   useListAssignmentRequests,
+  useMe,
   useRejectAssignmentRequests,
 } from '@/hooks';
 import { formatDate } from '@/lib/utils';
 import { RequestAssignmentOperation, RequestAssignmentStatus } from '@/types';
+import { useEffect } from 'react';
 
 export const AssignmentRequests = () => {
   const { data, isLoading } = useListAssignmentRequests();
+  const { data: me, isLoading: meLoading } = useMe();
   const { mutate: accept, isPending: accepting } =
     useAcceptAssignmentRequests();
   const { mutate: reject, isPending: rejecting } =
@@ -16,6 +19,30 @@ export const AssignmentRequests = () => {
 
   const { mutate: deleteAssignmentRequests, isPending: deleting } =
     useDeleteAssignmentRequests();
+
+  const showPage = !!me?.isRoot || !!me?.isApprover;
+
+  useEffect(() => {
+    if (!meLoading && !showPage) {
+      setTimeout(() => {
+        window.location.replace('/');
+      }, 2000);
+    }
+  }, [meLoading, me?.isRoot, me?.isApprover]);
+
+  if (meLoading) {
+    return null;
+  }
+
+  if (!showPage) {
+    return (
+      <div className="w-full">
+        <h1>
+          You are not an approver. You will be redirected to the home page.
+        </h1>
+      </div>
+    );
+  }
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Assignment Requests</h1>

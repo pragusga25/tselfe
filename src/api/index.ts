@@ -220,7 +220,7 @@ export const register = (payload: RegisterPayload): Promise<RegisterData> =>
   apiPrivate.post('/auth.register', payload).then((res) => res.data.result);
 
 export const getMe = (accessToken?: string): Promise<MeData> =>
-  api
+  apiPrivate
     .get(`/me`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -750,11 +750,14 @@ export const deletePrincipal = (
     })
     .then((res) => res.data.result);
 
-export const listLogs = (accessToken?: string): Promise<ListLogsData> =>
+export const listLogs = (
+  { pageParam = 0 }: { pageParam: number },
+  accessToken?: string
+): Promise<ListLogsData> =>
   api
-    .get(`/logs.list`, {
+    .get(`/logs.list?cursor=${pageParam}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     })
-    .then((res) => res.data.result);
+    .then((res) => res.data);

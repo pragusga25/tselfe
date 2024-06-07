@@ -1,18 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { listLogs } from '@/api';
-import { Role } from '@/types';
+import { ListLogsData, Role } from '@/types';
 
 export const useListLogs = () => {
   const {
     auth: { accessToken, user },
   } = useAuth();
 
-  const query = useQuery({
+  const infiniteQuery = useInfiniteQuery({
     queryKey: ['logs.list'],
-    queryFn: () => listLogs(accessToken),
+    queryFn: ({ pageParam = 0 }: { pageParam: number }) =>
+      listLogs({ pageParam }, accessToken),
+    getNextPageParam: (lastPage: ListLogsData, _pages) => lastPage.nextCursor,
+    initialPageParam: 0,
     enabled: user?.role === Role.ADMIN,
   });
 
-  return query;
+  return infiniteQuery;
 };
