@@ -47,6 +47,7 @@ export type IdResponse = {
 export type PermissionSet = {
   arn: string;
   name?: string;
+  tags: Record<string, string>;
 };
 
 export type PermissionSets = PermissionSet[];
@@ -302,6 +303,13 @@ export type ListPrincipalsNotInDbData = {
   type: PrincipalType;
 }[];
 export type ListPermissionSetsData = PermissionSets;
+export type UpdatePermissionSetPayload = {
+  arn: string;
+  tags: {
+    operation: 'SHOW' | 'HIDE';
+    values: string;
+  };
+};
 export type ListMyPermissionSetsData = {
   principalId: string;
   principalType: PrincipalType;

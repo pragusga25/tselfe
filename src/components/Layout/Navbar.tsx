@@ -19,6 +19,7 @@ export const Navbar = () => {
         'Principals',
         'Accounts',
         'Approvers',
+        'Permission Sets',
         'Logs',
         'Settings',
       ];
@@ -82,7 +83,10 @@ export const Navbar = () => {
             >
               {menuItems.map((item) => (
                 <li key={item}>
-                  <a href={`/${item.toLowerCase()}`} className="menu-item">
+                  <a
+                    href={`/${item.toLowerCase().replace(' ', '-')}`}
+                    className="menu-item"
+                  >
                     {item}
                     {hasNotif && item === 'Requests' && (
                       <span className="w-4 h-4 text-xs text-center text-black font-bold bg-red-400 rounded-full">

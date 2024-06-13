@@ -66,6 +66,7 @@ import {
   ResetAccountUserPasswordPayload,
   UpdateAccountUserData,
   UpdateAccountUserPayload,
+  UpdatePermissionSetPayload,
   UpdatePrincipalData,
   UpdatePrincipalGroupData,
   UpdatePrincipalGroupPayload,
@@ -459,6 +460,18 @@ export const listPermissionSets = (
     })
     .then((res) => res.data.result);
 
+export const updatePermissionSet = (
+  payload: UpdatePermissionSetPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/permission-sets.update`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
 export const requestAssignment = (
   data: RequestAssignmentPayload,
   accessToken?: string
@@ -751,13 +764,32 @@ export const deletePrincipal = (
     .then((res) => res.data.result);
 
 export const listLogs = (
-  { pageParam = 0 }: { pageParam: number },
+  {
+    pageParam = 0,
+    from,
+    to,
+  }: { pageParam: number; from?: number; to?: number },
   accessToken?: string
-): Promise<ListLogsData> =>
-  api
-    .get(`/logs.list?cursor=${pageParam}`, {
+): Promise<ListLogsData> => {
+  const params = new URLSearchParams({
+    cursor: pageParam.toString(),
+  });
+
+  if (typeof from === 'number' && from >= 0) {
+    params.append('from', from.toString());
+  }
+
+  if (typeof to === 'number' && to >= 0) {
+    params.append('to', to.toString());
+  }
+
+  const paramString = params.toString();
+
+  return api
+    .get(`/logs.list?${paramString}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     })
     .then((res) => res.data);
+};

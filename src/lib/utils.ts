@@ -136,3 +136,28 @@ export const getLocaleDateString = (
 
   return `${dateStr}-${monthStr}-${yearStr}`;
 };
+
+export const getPsTagsInfo = (tags: Record<string, string>) => {
+  let showOrHide: 'SHOW' | 'HIDE' = 'HIDE';
+  let showHideValue = 'ALL USERS';
+
+  if ('showTo' in tags) {
+    showHideValue = tags['showTo'];
+    showOrHide = 'SHOW';
+  }
+
+  if ('hideFrom' in tags) {
+    showHideValue = tags['hideFrom'];
+    showOrHide = 'HIDE';
+  }
+
+  const isShow = showOrHide === 'SHOW';
+  const isAll = showHideValue === 'ALL USERS';
+
+  return {
+    showOrHide,
+    showHideValue,
+    isShow,
+    isAll,
+  };
+};

@@ -14,6 +14,7 @@ import { Principals } from './components/Principals';
 import { Logs } from './components/Logs';
 import { Approvers } from './components/Approvers';
 import { NotFound } from './components/NotFound';
+import { PermissionSets } from './components/PermissionSets';
 
 function App() {
   const {
@@ -34,6 +35,7 @@ function App() {
             <Route path="/freezes" element={<FreezeTimes />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/principals" element={<Principals />} />
+            <Route path="/permission-sets" element={<PermissionSets />} />
             <Route path="/logs" element={<Logs />} />
           </>
         </Route>

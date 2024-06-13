@@ -197,6 +197,9 @@ export const useRequestAssignment = () => {
       await queryClient.invalidateQueries({
         queryKey: ['assignment-requests.my-list'],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ['assignment-requests.count'],
+      });
       toast.success('Assignment requested successfully');
     },
   });

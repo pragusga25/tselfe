@@ -1,10 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
-import { listMyPermissionSets, listPermissionSets } from '@/api';
+import {
+  listMyPermissionSets,
+  listPermissionSets,
+  updatePermissionSet,
+} from '@/api';
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
-import { useMemo } from 'react';
-import { Role } from '@/types';
+import { ChangeEvent, useMemo, useState } from 'react';
+import { Role, UpdatePermissionSetPayload } from '@/types';
 
 export const useListPermissionSets = () => {
   const {
@@ -16,6 +20,20 @@ export const useListPermissionSets = () => {
     queryFn: () => listPermissionSets(accessToken),
     enabled: !!accessToken,
   });
+
+  const [search, setSearch] = useState('');
+
+  const searchResult = useMemo(() => {
+    return query.data?.filter(({ name }) => {
+      const searchLower = search.toLowerCase();
+
+      return name?.toLocaleLowerCase().includes(searchLower);
+    });
+  }, [query.data, search]);
+
+  const onSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
 
   const errorMemo = useMemo(() => query.error, [query.error]);
 
@@ -35,7 +53,7 @@ export const useListPermissionSets = () => {
     }
   }
 
-  return query;
+  return { ...query, searchResult, onSearch, search };
 };
 
 export const useMyListPermissionSets = () => {
@@ -64,4 +82,27 @@ export const useMyListPermissionSets = () => {
   }
 
   return query;
+};
+
+export const useUpdatePermissionSet = () => {
+  const queryClient = useQueryClient();
+  const {
+    auth: { accessToken },
+  } = useAuth();
+  const mutation = useMutation({
+    mutationFn: (data: UpdatePermissionSetPayload) =>
+      toast.promise(updatePermissionSet(data, accessToken), {
+        loading: 'Updating permission set...',
+        success: 'Permission set updated successfully',
+        error: 'Error updating permission set',
+      }),
+    mutationKey: ['permission-sets.update'],
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['permission-sets.list'],
+      });
+    },
+  });
+
+  return mutation;
 };
