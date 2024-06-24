@@ -1,6 +1,8 @@
+import { encodeQueryData } from '@/lib/utils';
 import {
   AcceptAssignmentRequestsData,
   AcceptAssignmentRequestsPayload,
+  AcceptAssignmentUserRequestPayload,
   CountAssignmentRequestsData,
   CountAssignmentRequestsQuery,
   CreateAccountAdminBulkPayload,
@@ -11,6 +13,7 @@ import {
   CreateApproversPayload,
   CreateAssignmentData,
   CreateAssignmentPayload,
+  CreateAssignmentUserRequestPayload,
   CreateFreezeTimeData,
   CreateFreezeTimePayload,
   CreatePrincipalData,
@@ -19,6 +22,7 @@ import {
   CreatePrincipalPayload,
   CreatePrincipalUserData,
   CreatePrincipalUserPayload,
+  CreateTimeInHourPayload,
   CreateUserData,
   CreateUserPayload,
   DeleteApproverPayload,
@@ -26,19 +30,23 @@ import {
   DeleteAssignmentPayload,
   DeleteAssignmentRequestsData,
   DeleteAssignmentRequestsPayload,
+  DeleteAssignmentUserRequestPayload,
   DeleteFreezeTimesData,
   DeleteFreezeTimesPayload,
   DeletePrincipalData,
   DeletePrincipalPayload,
+  DeleteTimeInHourPayload,
   DeleteUsersData,
   DeleteUsersPayload,
   EditAssignmentPayload,
+  GetAssignmentUserRequestFormDataData,
   GetIdentityInstanceData,
   ListAccountAdminsData,
   ListAccountUsersData,
   ListApproversData,
   ListAssignmentGroupsData,
   ListAssignmentRequestsData,
+  ListAssignmentUserRequestsData,
   ListAssignmentUsersData,
   ListAssignmentsData,
   ListAwsAccountsData,
@@ -51,16 +59,19 @@ import {
   ListPrincipalUsersData,
   ListPrincipalsData,
   ListPrincipalsNotInDbData,
+  ListTimeInHoursData,
   ListUsersData,
   LoginData,
   LoginPayload,
   MeData,
   OkResponse,
   PushOneAssignmentPayload,
+  Query,
   RegisterData,
   RegisterPayload,
   RejectAssignmentRequestsData,
   RejectAssignmentRequestsPayload,
+  RejectAssignmentUserRequestPayload,
   RequestAssignmentData,
   RequestAssignmentPayload,
   ResetAccountUserPasswordPayload,
@@ -283,15 +294,21 @@ export const listAwsAccounts = (
     .then((res) => res.data.result);
 
 export const listPrincipalGroups = (
-  accessToken?: string
-): Promise<ListPrincipalGroupsData> =>
-  api
-    .get(`/principals.groups.list`, {
+  accessToken?: string,
+  q?: Query
+): Promise<ListPrincipalGroupsData> => {
+  let qs = '';
+  if (q) {
+    qs = encodeQueryData(q);
+  }
+  return api
+    .get(`/principals.groups.list?${qs}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     })
     .then((res) => res.data.result);
+};
 
 export const listPrincipalUsers = (
   accessToken?: string
@@ -460,12 +477,117 @@ export const listPermissionSets = (
     })
     .then((res) => res.data.result);
 
+export const getAssignmentUserRequestFormData = (
+  accessToken?: string
+): Promise<GetAssignmentUserRequestFormDataData> =>
+  api
+    .get(`/assignment-user-requests.get-form-data`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const createAssignmentUserRequest = (
+  payload: CreateAssignmentUserRequestPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/assignment-user-requests.create`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const deleteAssignmentUserRequest = (
+  payload: DeleteAssignmentUserRequestPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/assignment-user-requests.delete`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const rejectAssignmentUserRequest = (
+  payload: RejectAssignmentUserRequestPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/assignment-user-requests.reject`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const acceptAssignmentUserRequest = (
+  payload: AcceptAssignmentUserRequestPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/assignment-user-requests.accept`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
 export const updatePermissionSet = (
   payload: UpdatePermissionSetPayload,
   accessToken?: string
 ): Promise<OkResponse> =>
   api
     .post(`/permission-sets.update`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const deleteTimeInHour = (
+  payload: DeleteTimeInHourPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/time-in-hours.delete`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const createTimeInHour = (
+  payload: CreateTimeInHourPayload,
+  accessToken?: string
+): Promise<OkResponse> =>
+  api
+    .post(`/time-in-hours.create`, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const listTimeInHours = (
+  accessToken?: string
+): Promise<ListTimeInHoursData> =>
+  api
+    .get(`/time-in-hours.list`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
+export const listAssignmentUserRequests = (
+  accessToken?: string
+): Promise<ListAssignmentUserRequestsData> =>
+  api
+    .get(`/assignment-user-requests.list`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

@@ -36,7 +36,7 @@ export const Assignments = () => {
     );
   }, [data]);
 
-  const permissionSetOptions: PermissionSets =
+  const permissionSetOptions: { arn: string; name: string }[] =
     permissionSets?.map((p) => ({ arn: p.arn, name: p.name ?? p.arn })) ?? [];
 
   const isPermissionSetOptionsEmpty = permissionSetOptions.length === 0;

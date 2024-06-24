@@ -1,5 +1,8 @@
 import {
+  useCreateAssignmentUserRequest,
   useDeleteAssignmentRequests,
+  useGetAssignmentUserRequestsFormData,
+  useListAssignmentUserRequests,
   useListAwsAccounts,
   useListMyAssignmentRequests,
   useListPermissionSets,
@@ -7,11 +10,13 @@ import {
   useMyListPermissionSets,
   useRequestAssignment,
   useUpdateUserPassword,
+  useDeleteAssignmentUserRequest,
 } from '@/hooks';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  CreateAssignmentUserRequestPayload,
   RequestAssignmentOperation,
   RequestAssignmentPayload,
   RequestAssignmentStatus,
@@ -24,6 +29,8 @@ export const User = () => {
   const { data: myPs } = useMyListPermissionSets();
   const { data: ps } = useListPermissionSets();
   const { data: awsAccounts } = useListAwsAccounts();
+  const { data: userRequestFormData } = useGetAssignmentUserRequestsFormData();
+  const { data: assignmentUserRequestsData } = useListAssignmentUserRequests();
   const [operation, setOperations] = useState(
     RequestAssignmentOperation.ATTACH
   );
@@ -33,8 +40,40 @@ export const User = () => {
     onChangePassword,
     onSubmitPassword,
   } = useUpdateUserPassword();
+  const {
+    mutate: createUserRequestMutate,
+    isPending: createUserRequestPending,
+  } = useCreateAssignmentUserRequest();
+  const {
+    mutate: deleteUserRequestMutate,
+    isPending: deleteUserRequestPending,
+  } = useDeleteAssignmentUserRequest();
 
   const [showAccountInfo, setShowAccountInfo] = useState(true);
+  const initCreateUserRequestPayload: CreateAssignmentUserRequestPayload = {
+    awsAccountId: '',
+    permissionSetArn: '',
+    timeInHour: -1,
+  };
+  const [createUserRequestPayload, setCreateUserRequestPayload] = useState(
+    initCreateUserRequestPayload
+  );
+
+  const onChnageCreateUserRequest = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const name = e.target.name;
+    let value: number | string = e.target.value;
+
+    if (name === 'timeInHour') {
+      value = parseInt(value, 10);
+    }
+
+    setCreateUserRequestPayload((prev) => ({
+      ...prev,
+      [e.target.name]: value,
+    }));
+  };
 
   const initRequestPayload: Required<RequestAssignmentPayload> = {
     operation: RequestAssignmentOperation.ATTACH,
@@ -89,11 +128,23 @@ export const User = () => {
     });
   };
 
+  const [tab, setTab] = useState('GROUP');
+  const isGroupTabActive = tab === 'GROUP';
+  const onGroupTab = () => setTab('GROUP');
+  const onUserTab = () => setTab('USER');
+
   useEffect(() => {
     if (requested) {
       setRequestPayload(initRequestPayload);
     }
   }, [requested]);
+
+  useEffect(() => {
+    setCreateUserRequestPayload((prev) => ({
+      ...prev,
+      timeInHour: userRequestFormData?.times?.[0] ?? -1,
+    }));
+  }, [userRequestFormData?.times]);
   return (
     <div className="mb-8">
       <button
@@ -159,7 +210,7 @@ export const User = () => {
                   <table className="table table-zebra table-md">
                     <thead>
                       <tr>
-                        <th>Group Name</th>
+                        <th>Principal</th>
                         <th>AWS Account</th>
                         <th>Permission Sets</th>
                       </tr>
@@ -170,10 +221,13 @@ export const User = () => {
                           awsAccountName,
                           permissionSets,
                           principalDisplayName,
+                          principalType,
                         }) => {
                           return (
                             <tr key={principalDisplayName + awsAccountName}>
-                              <td>{principalDisplayName}</td>
+                              <td>
+                                ({principalType}) {principalDisplayName}
+                              </td>
                               <td>{awsAccountName}</td>
                               <td>
                                 {permissionSets.map((ps) => ps.name).join(', ')}
@@ -239,97 +293,51 @@ export const User = () => {
         </section>
       )}
 
-      <section className="mt-4">
-        <h2 className="text-2xl font-semibold mb-4">Assignment Requests</h2>
-        <div className="flex justify-start">
-          <ModalButton
-            id="requestAssignment"
-            text="Request Assignment"
-            className={`btn-md ${canRequest ? 'btn-primary' : 'btn-error'}`}
-            overrideOnClick={
-              !canRequest
-                ? () => {
-                    toast.error(
-                      'User does not have principalId or principalType'
-                    );
-                  }
-                : undefined
-            }
-          />
+      <div role="tablist" className="tabs tabs-boxed mt-5">
+        <a
+          role="tab"
+          className={`tab ${isGroupTabActive ? 'tab-active' : ''}`}
+          onClick={onGroupTab}
+        >
+          GROUP
+        </a>
+        <a
+          role="tab"
+          className={`tab ${isGroupTabActive ? '' : 'tab-active'}`}
+          onClick={onUserTab}
+        >
+          My User
+        </a>
+      </div>
 
-          {canRequest ? (
-            <Modal id="requestAssignment" title="Request Assignment">
+      {!isGroupTabActive && (
+        <section className="mt-4">
+          <h2 className="text-2xl font-semibold mb-4">
+            Assignment User Requests
+          </h2>
+          <div className="flex justify-start">
+            <ModalButton
+              id="requestMyAssignment"
+              text="Request My Assignment"
+              className={`btn-md btn-primary`}
+            />
+
+            <Modal id="requestMyAssignment" title="Request My Assignment">
               <>
-                <div className="mt-2">
-                  <div className="label">
-                    <span className="label-text">Choose operation</span>
-                  </div>
-                  <select
-                    value={operation}
-                    className="select select-bordered w-full"
-                    name="operation"
-                    onChange={(e) => {
-                      setOperations(
-                        e.target.value as RequestAssignmentOperation
-                      );
-                    }}
-                  >
-                    {Object.values(RequestAssignmentOperation).map((p) => (
-                      <option value={p} key={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-control mt-2">
-                  <div className="label">
-                    <span className="label-text">Group</span>
-                  </div>
-                  <select
-                    value={requestPayload.principalGroupId}
-                    className="select select-bordered w-full"
-                    name="principalGroupId"
-                    onChange={(e) => {
-                      setRequestPayload((prev) => ({
-                        ...prev,
-                        principalGroupId: e.target.value,
-                      }));
-                    }}
-                  >
-                    <option value="" disabled hidden key="default">
-                      Select Group
-                    </option>
-                    {data?.memberships.map(({ groupDisplayName, groupId }) => {
-                      const value = groupId;
-                      return (
-                        <option value={value} key={value}>
-                          {groupDisplayName}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-
                 <div className="form-control">
                   <div className="label">
                     <span className="label-text">AWS Account</span>
                   </div>
                   <select
-                    value={requestPayload.awsAccountId}
+                    value={createUserRequestPayload.awsAccountId}
                     className="select select-bordered w-full"
                     name="awsAccountId"
-                    onChange={(e) => {
-                      setRequestPayload((prev) => ({
-                        ...prev,
-                        awsAccountId: e.target.value,
-                      }));
-                    }}
+                    onChange={onChnageCreateUserRequest}
                   >
                     <option value="" disabled hidden key="default">
                       Select AWS Account
                     </option>
-                    {filteredAwsAccounts?.map(({ id, name }) => {
+                    {userRequestFormData?.awsAccounts?.map(({ id, name }) => {
                       const value = id;
                       return (
                         <option value={value} key={value}>
@@ -340,53 +348,255 @@ export const User = () => {
                   </select>
                 </div>
 
-                <div className="label mt-2">
-                  <span className="label-text">Choose Permission Sets</span>
+                <div className="form-control">
+                  <div className="label">
+                    <span className="label-text">Permission Set</span>
+                  </div>
+                  <select
+                    value={createUserRequestPayload.permissionSetArn}
+                    className="select select-bordered w-full"
+                    name="permissionSetArn"
+                    onChange={onChnageCreateUserRequest}
+                  >
+                    <option value="" disabled hidden key="default">
+                      Select Permission Set
+                    </option>
+                    {userRequestFormData?.permissionSets?.map(
+                      ({ name, arn }) => {
+                        return (
+                          <option value={arn} key={arn}>
+                            {name}
+                          </option>
+                        );
+                      }
+                    )}
+                  </select>
                 </div>
 
-                <div className="overflow-x-auto mt-2">
-                  {isOptionsEmpty ? (
-                    'No permission sets available for this operation.'
-                  ) : (
-                    <table className="table">
-                      <thead>
-                        <tr>
-                          <th>
-                            <label>
-                              <input
-                                type="checkbox"
-                                className="checkbox"
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setRequestPayload((prev) => ({
-                                      ...prev,
-                                      permissionSetArns: options.map(
-                                        (p) => p.arn
-                                      ),
-                                    }));
-                                  } else {
-                                    setRequestPayload((prev) => ({
-                                      ...prev,
-                                      permissionSetArns: [],
-                                    }));
-                                  }
-                                }}
-                                checked={
-                                  requestPayload.permissionSetArns.length ===
-                                    ps?.length &&
-                                  requestPayload.permissionSetArns.length !== 0
-                                }
-                              />
-                            </label>
-                          </th>
-                          <th>Name</th>
-                          <th>Arn</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {options.map((p) => (
-                          <tr key={p.arn}>
-                            <td>
+                <div className="form-control">
+                  <div className="label">
+                    <span className="label-text">Time</span>
+                  </div>
+                  <select
+                    className="select select-bordered w-full"
+                    value={createUserRequestPayload.timeInHour}
+                    name="timeInHour"
+                    onChange={onChnageCreateUserRequest}
+                  >
+                    <option value="" disabled hidden key="default">
+                      Select how long your account will be assigned
+                    </option>
+                    {userRequestFormData?.times?.map((v) => {
+                      return (
+                        <option value={v} key={v}>
+                          {v}h
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <button
+                  className="btn btn-primary mt-2 w-full"
+                  type="button"
+                  onClick={() => {
+                    createUserRequestMutate(createUserRequestPayload);
+                  }}
+                >
+                  {createUserRequestPending && (
+                    <span className="loading loading-spinner"></span>
+                  )}
+                  Request
+                </button>
+              </>
+            </Modal>
+          </div>
+
+          <div className="overflow-x-auto mt-4">
+            <table className="table table-sm">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Permission Set</th>
+                  <th>AWS Account</th>
+                  <th>Time (in hours) / End At</th>
+                  <th>Status</th>
+                  <th>Responder</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {assignmentUserRequestsData?.map((d, idx) => {
+                  let badge = 'badge-warning';
+
+                  const { status } = d;
+                  const ableToDelete =
+                    status == RequestAssignmentStatus.PENDING;
+                  if (status === RequestAssignmentStatus.ACCEPTED) {
+                    badge = 'badge-success';
+                  } else if (status === RequestAssignmentStatus.REJECTED) {
+                    badge = 'badge-error';
+                  }
+
+                  const endAt = d.endAt ? formatDate(d.endAt, true) : '-';
+
+                  return (
+                    <tr key={d.id}>
+                      <td>{idx + 1}</td>
+                      <td>{d.permissionSetName}</td>
+                      <td>{d.awsAccountName}</td>
+                      <td>
+                        {d.timeInHour} / {endAt}
+                      </td>
+                      <td>
+                        <span className={`badge ${badge} badge-outline`}>
+                          {d.status}
+                        </span>
+                      </td>
+                      <td>{d.responder?.name}</td>
+                      {ableToDelete && (
+                        <td>
+                          <button
+                            className="btn btn-error"
+                            onClick={() => {
+                              deleteUserRequestMutate({
+                                id: d.id,
+                              });
+                            }}
+                            disabled={deleteUserRequestPending}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {isGroupTabActive && (
+        <section className="mt-4">
+          <h2 className="text-2xl font-semibold mb-4">
+            Assignment Group Requests
+          </h2>
+          <div className="flex justify-start">
+            <ModalButton
+              id="requestAssignment"
+              text="Request Group Assignment"
+              className={`btn-md ${canRequest ? 'btn-primary' : 'btn-error'}`}
+              overrideOnClick={
+                !canRequest
+                  ? () => {
+                      toast.error(
+                        'User does not have principalId or principalType'
+                      );
+                    }
+                  : undefined
+              }
+            />
+
+            {canRequest ? (
+              <Modal id="requestAssignment" title="Request Assignment">
+                <>
+                  <div className="mt-2">
+                    <div className="label">
+                      <span className="label-text">Choose operation</span>
+                    </div>
+                    <select
+                      value={operation}
+                      className="select select-bordered w-full"
+                      name="operation"
+                      onChange={(e) => {
+                        setOperations(
+                          e.target.value as RequestAssignmentOperation
+                        );
+                      }}
+                    >
+                      {Object.values(RequestAssignmentOperation).map((p) => (
+                        <option value={p} key={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-control mt-2">
+                    <div className="label">
+                      <span className="label-text">Group</span>
+                    </div>
+                    <select
+                      value={requestPayload.principalGroupId}
+                      className="select select-bordered w-full"
+                      name="principalGroupId"
+                      onChange={(e) => {
+                        setRequestPayload((prev) => ({
+                          ...prev,
+                          principalGroupId: e.target.value,
+                        }));
+                      }}
+                    >
+                      <option value="" disabled hidden key="default">
+                        Select Group
+                      </option>
+                      {data?.memberships.map(
+                        ({ groupDisplayName, groupId }) => {
+                          const value = groupId;
+                          return (
+                            <option value={value} key={value}>
+                              {groupDisplayName}
+                            </option>
+                          );
+                        }
+                      )}
+                    </select>
+                  </div>
+
+                  <div className="form-control">
+                    <div className="label">
+                      <span className="label-text">AWS Account</span>
+                    </div>
+                    <select
+                      value={requestPayload.awsAccountId}
+                      className="select select-bordered w-full"
+                      name="awsAccountId"
+                      onChange={(e) => {
+                        setRequestPayload((prev) => ({
+                          ...prev,
+                          awsAccountId: e.target.value,
+                        }));
+                      }}
+                    >
+                      <option value="" disabled hidden key="default">
+                        Select AWS Account
+                      </option>
+                      {filteredAwsAccounts?.map(({ id, name }) => {
+                        const value = id;
+                        return (
+                          <option value={value} key={value}>
+                            {name}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  <div className="label mt-2">
+                    <span className="label-text">Choose Permission Sets</span>
+                  </div>
+
+                  <div className="overflow-x-auto mt-2">
+                    {isOptionsEmpty ? (
+                      'No permission sets available for this operation.'
+                    ) : (
+                      <table className="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>
                               <label>
                                 <input
                                   type="checkbox"
@@ -395,145 +605,183 @@ export const User = () => {
                                     if (e.target.checked) {
                                       setRequestPayload((prev) => ({
                                         ...prev,
-                                        permissionSetArns: [
-                                          ...prev.permissionSetArns,
-                                          p.arn,
-                                        ],
+                                        permissionSetArns: options.map(
+                                          (p) => p.arn
+                                        ),
                                       }));
                                     } else {
                                       setRequestPayload((prev) => ({
                                         ...prev,
-                                        permissionSetArns:
-                                          prev.permissionSetArns.filter(
-                                            (ps) => ps !== p.arn
-                                          ),
+                                        permissionSetArns: [],
                                       }));
                                     }
                                   }}
                                   checked={
-                                    !!requestPayload.permissionSetArns.find(
-                                      (arn) => arn === p.arn
-                                    )
+                                    requestPayload.permissionSetArns.length ===
+                                      ps?.length &&
+                                    requestPayload.permissionSetArns.length !==
+                                      0
                                   }
                                 />
                               </label>
-                            </td>
-                            <td>{p.name}</td>
-                            <td>{p.arn}</td>
+                            </th>
+                            <th>Name</th>
+                            <th>Arn</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-
-                <div className="mt-2">
-                  <div className="label">
-                    <span className="label-text">Note</span>
+                        </thead>
+                        <tbody>
+                          {options.map((p) => (
+                            <tr key={p.arn}>
+                              <td>
+                                <label>
+                                  <input
+                                    type="checkbox"
+                                    className="checkbox"
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setRequestPayload((prev) => ({
+                                          ...prev,
+                                          permissionSetArns: [
+                                            ...prev.permissionSetArns,
+                                            p.arn,
+                                          ],
+                                        }));
+                                      } else {
+                                        setRequestPayload((prev) => ({
+                                          ...prev,
+                                          permissionSetArns:
+                                            prev.permissionSetArns.filter(
+                                              (ps) => ps !== p.arn
+                                            ),
+                                        }));
+                                      }
+                                    }}
+                                    checked={
+                                      !!requestPayload.permissionSetArns.find(
+                                        (arn) => arn === p.arn
+                                      )
+                                    }
+                                  />
+                                </label>
+                              </td>
+                              <td>{p.name}</td>
+                              <td>{p.arn}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
-                  <textarea
-                    className="textarea textarea-bordered w-full"
-                    placeholder="Note"
-                    value={requestPayload.note}
-                    onChange={(e) => {
-                      setRequestPayload((prev) => ({
-                        ...prev,
-                        note: e.target.value,
-                      }));
-                    }}
-                  ></textarea>
-                </div>
 
-                <button
-                  className="btn btn-primary mt-2 w-full"
-                  disabled={isRequesting}
-                  onClick={onRequest}
-                >
-                  {isRequesting && (
-                    <span className="loading loading-spinner"></span>
-                  )}
-                  Request
-                </button>
-              </>
-            </Modal>
-          ) : null}
-        </div>
+                  <div className="mt-2">
+                    <div className="label">
+                      <span className="label-text">Note</span>
+                    </div>
+                    <textarea
+                      className="textarea textarea-bordered w-full"
+                      placeholder="Note"
+                      value={requestPayload.note}
+                      onChange={(e) => {
+                        setRequestPayload((prev) => ({
+                          ...prev,
+                          note: e.target.value,
+                        }));
+                      }}
+                    ></textarea>
+                  </div>
 
-        <div className="mt-4">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Permission Set</th>
-                <th>Operation</th>
-                <th>Note</th>
-                <th>Status</th>
-                <th>Requested At</th>
-                <th>Responder</th>
-                <th>Responded At</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {myAssignmentRequests?.map((a) => {
-                let badge = 'badge-warning';
-                let badgeOp = 'badge-accent';
-                const { status, operation } = a;
-                if (status === RequestAssignmentStatus.ACCEPTED) {
-                  badge = 'badge-success';
-                } else if (status === RequestAssignmentStatus.REJECTED) {
-                  badge = 'badge-error';
-                }
+                  <button
+                    className="btn btn-primary mt-2 w-full"
+                    disabled={isRequesting}
+                    onClick={onRequest}
+                  >
+                    {isRequesting && (
+                      <span className="loading loading-spinner"></span>
+                    )}
+                    Request
+                  </button>
+                </>
+              </Modal>
+            ) : null}
+          </div>
 
-                if (operation === RequestAssignmentOperation.ATTACH) {
-                  badgeOp = 'badge-info';
-                }
+          <div className="mt-4">
+            <table className="table table-sm">
+              <thead>
+                <tr>
+                  <th>AWS Account/Principal</th>
+                  <th>Permission Set</th>
+                  <th>Operation</th>
+                  <th>Note</th>
+                  <th>Status</th>
+                  <th>Requested At</th>
+                  <th>Responder</th>
+                  <th>Responded At</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myAssignmentRequests?.map((a) => {
+                  let badge = 'badge-warning';
+                  let badgeOp = 'badge-accent';
+                  const { status, operation } = a;
+                  if (status === RequestAssignmentStatus.ACCEPTED) {
+                    badge = 'badge-success';
+                  } else if (status === RequestAssignmentStatus.REJECTED) {
+                    badge = 'badge-error';
+                  }
 
-                const ableToDelete = status === RequestAssignmentStatus.PENDING;
+                  if (operation === RequestAssignmentOperation.ATTACH) {
+                    badgeOp = 'badge-info';
+                  }
 
-                return (
-                  <tr key={a.id}>
-                    <td>{a.permissionSets.map((p) => p.name).join(', ')}</td>
-                    <td>
-                      <span className={`badge ${badgeOp} badge-outline`}>
-                        {operation}
-                      </span>
-                    </td>
-                    <td>{a.note}</td>
-                    <td>
-                      <span className={`badge ${badge} badge-outline`}>
-                        {status}
-                      </span>
-                    </td>
-                    <td>{formatDate(a.requestedAt)}</td>
-                    <td>
-                      {a.responder
-                        ? `${a.responder?.name} (@${a.responder?.username})`
-                        : '-'}
-                    </td>
-                    <td>{a.respondedAt ? formatDate(a.respondedAt) : '-'}</td>
-                    <td>
-                      {ableToDelete && (
-                        <button
-                          className="btn btn-error"
-                          onClick={() => {
-                            deleteAssignmentRequest({ ids: [a.id] });
-                          }}
-                          disabled={isDeleting}
-                        >
-                          {isDeleting && (
-                            <span className="loading loading-spinner"></span>
-                          )}
-                          Delete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                  const ableToDelete =
+                    status == RequestAssignmentStatus.PENDING;
+
+                  const principal = `${a.awsAccountName}/${a.principalDisplayName}`;
+
+                  return (
+                    <tr key={a.id}>
+                      <td>{principal}</td>
+                      <td>{a.permissionSets.map((p) => p.name).join(', ')}</td>
+                      <td>
+                        <span className={`badge ${badgeOp} badge-outline`}>
+                          {operation}
+                        </span>
+                      </td>
+                      <td>{a.note}</td>
+                      <td>
+                        <span className={`badge ${badge} badge-outline`}>
+                          {status}
+                        </span>
+                      </td>
+                      <td>{formatDate(a.requestedAt)}</td>
+                      <td>{a.responder ? `${a.responder?.name}` : '-'}</td>
+                      <td>{a.respondedAt ? formatDate(a.respondedAt) : '-'}</td>
+                      <td>
+                        {ableToDelete && (
+                          <button
+                            className="btn btn-error"
+                            onClick={() => {
+                              deleteAssignmentRequest({ ids: [a.id] });
+                            }}
+                            disabled={isDeleting}
+                          >
+                            {isDeleting && (
+                              <span className="loading loading-spinner"></span>
+                            )}
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 };

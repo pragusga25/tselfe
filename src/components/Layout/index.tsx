@@ -14,7 +14,10 @@ export const Layout = () => {
       !isLoggedIn
       // && !isLoading
     ) {
-      window.location.replace('/login');
+      const { pathname, search } = window.location;
+      window.location.replace(
+        `/login?redirect=${encodeURIComponent(`${pathname}${search}`)}`
+      );
     }
   }, [
     isLoggedIn,

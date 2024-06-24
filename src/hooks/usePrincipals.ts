@@ -19,6 +19,7 @@ import {
   CreatePrincipalPayload,
   CreatePrincipalUserPayload,
   DeletePrincipalPayload,
+  Query,
   Role,
   UpdatePrincipalGroupPayload,
   UpdatePrincipalPayload,
@@ -68,14 +69,14 @@ export const useListAwsAccounts = () => {
   return query;
 };
 
-export const useListPrincipalGroups = () => {
+export const useListPrincipalGroups = (q?: Query) => {
   const {
     auth: { accessToken },
   } = useAuth();
 
   const query = useQuery({
     queryKey: ['principals.groups.list'],
-    queryFn: () => listPrincipalGroups(accessToken),
+    queryFn: () => listPrincipalGroups(accessToken, q),
   });
 
   const [search, setSearch] = useState('');

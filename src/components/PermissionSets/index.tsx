@@ -1,6 +1,6 @@
 import {
-  useListAccountUsers,
   useListPermissionSets,
+  useListPrincipalGroups,
   useUpdatePermissionSet,
 } from '@/hooks';
 import { getPsTagsInfo } from '@/lib/utils';
@@ -12,28 +12,28 @@ export const PermissionSets = () => {
   const { onSearch, search, data, searchResult: pss } = useListPermissionSets();
   const { mutate, isPending, isSuccess } = useUpdatePermissionSet();
   const {
-    searchResult: searchResultUsers,
-    search: searchUsers,
-    onSearch: onSearchUsers,
-  } = useListAccountUsers();
+    searchResult: searchResultGroups,
+    search: searchGroups,
+    onSearch: onSearchGroups,
+  } = useListPrincipalGroups({ mode: 'withoutMemberships' });
 
   const initUpdatePayload: UpdatePermissionSetPayload & {
-    target: 'ALL USERS' | 'Specific Users';
-    selectedUsers: string[];
+    target: 'ALL GROUPS' | 'Specific Groups';
+    selectedGroups: string[];
   } = {
     arn: '',
     tags: {
       operation: 'HIDE',
       values: '',
     },
-    target: 'ALL USERS',
-    selectedUsers: [],
+    target: 'ALL GROUPS',
+    selectedGroups: [],
   };
 
   const [updatePayload, setUpdatePayload] = useState<
     UpdatePermissionSetPayload & {
-      target: 'ALL USERS' | 'Specific Users';
-      selectedUsers: string[];
+      target: 'ALL GROUPS' | 'Specific Groups';
+      selectedGroups: string[];
     }
   >(initUpdatePayload);
 
@@ -42,12 +42,12 @@ export const PermissionSets = () => {
   };
 
   const onEdit = () => {
-    const isAll = updatePayload.target === 'ALL USERS';
+    const isAll = updatePayload.target === 'ALL GROUPS';
     mutate({
       arn: updatePayload.arn,
       tags: {
         operation: updatePayload.tags.operation,
-        values: isAll ? 'ALL USERS' : updatePayload.selectedUsers.join(';'),
+        values: isAll ? 'ALL GROUPS' : updatePayload.selectedGroups.join(';'),
       },
     });
   };
@@ -60,18 +60,18 @@ export const PermissionSets = () => {
     <>
       <div className="form-control">
         <div className="label">
-          <span className="label-text">Select Users</span>
+          <span className="label-text">Select Groups</span>
         </div>
       </div>
 
       <div className="form-control">
         <input
-          value={searchUsers}
-          onChange={onSearchUsers}
+          value={searchGroups}
+          onChange={onSearchGroups}
           type="text"
           className="input input-bordered border-green-500 w-full mb-4"
           name="search"
-          placeholder="Search Users..."
+          placeholder="Search Groups..."
         />
       </div>
 
@@ -79,40 +79,12 @@ export const PermissionSets = () => {
         <table className="table">
           <thead>
             <tr>
-              <th>
-                {/* <label>
-                  <input
-                    type="checkbox"
-                    className="checkbox"
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setUpdatePayload((prev) => ({
-                          ...prev,
-                          target: 'Specific Users',
-                          selectedUsers:
-                            users?.map((user) => user.username) || [],
-                        }));
-                      } else {
-                        setUpdatePayload((prev) => ({
-                          ...prev,
-                          selectedUsers: [],
-                        }));
-                      }
-                    }}
-                    checked={
-                      updatePayload.selectedUsers.length === usersLen &&
-                      usersLen !== 0
-                    }
-                  />
-                </label> */}
-              </th>
-              <th>Username</th>
               <th>Name</th>
             </tr>
           </thead>
           <tbody>
-            {searchResultUsers?.map((user) => (
-              <tr key={user.id}>
+            {searchResultGroups?.map(({ displayName, id }) => (
+              <tr key={id}>
                 <td>
                   <label>
                     <input
@@ -121,37 +93,36 @@ export const PermissionSets = () => {
                       onChange={(e) => {
                         if (e.target.checked) {
                           if (
-                            updatePayload.selectedUsers.join(';').length +
-                              user.username.length >
+                            updatePayload.selectedGroups.join(';').length +
+                              displayName.length >=
                             254
                           ) {
-                            return toast.error('Max selected users reached');
+                            return toast.error('Max selected groups reached');
                           }
 
                           setUpdatePayload((prev) => ({
                             ...prev,
-                            selectedUsers: [
-                              ...prev.selectedUsers,
-                              user.username,
+                            selectedGroups: [
+                              ...prev.selectedGroups,
+                              displayName,
                             ],
                           }));
                         } else {
                           setUpdatePayload((prev) => ({
                             ...prev,
-                            selectedUsers: prev.selectedUsers.filter(
-                              (u) => u !== user.username
+                            selectedGroups: prev.selectedGroups.filter(
+                              (u) => u !== displayName
                             ),
                           }));
                         }
                       }}
-                      checked={updatePayload.selectedUsers.includes(
-                        user.username
+                      checked={updatePayload.selectedGroups.includes(
+                        displayName
                       )}
                     />
                   </label>
                 </td>
-                <td>{user.username}</td>
-                <td>{user.name}</td>
+                <td>{displayName}</td>
               </tr>
             ))}
           </tbody>
@@ -265,8 +236,8 @@ export const PermissionSets = () => {
                               className="select select-bordered w-full"
                               onChange={(e) => {
                                 const value = e.target.value as
-                                  | 'ALL USERS'
-                                  | 'Specific Users';
+                                  | 'ALL GROUPS'
+                                  | 'Specific Groups';
 
                                 setUpdatePayload((prev) => ({
                                   ...prev,
@@ -277,7 +248,7 @@ export const PermissionSets = () => {
                               <option value="" className="hidden">
                                 Select Target
                               </option>
-                              {['ALL USERS', 'Specific Users'].map((op) => (
+                              {['ALL GROUPS', 'Specific Groups'].map((op) => (
                                 <option key={op} value={op}>
                                   {op}
                                 </option>
@@ -286,9 +257,9 @@ export const PermissionSets = () => {
                           </div>
                         )}
 
-                        {updatePayload.target === 'Specific Users' &&
+                        {updatePayload.target === 'Specific Groups' &&
                           selectUsersJSX}
-                        {updatePayload.target === 'Specific Users' && (
+                        {updatePayload.target === 'Specific Groups' && (
                           <div className="mt-3">
                             <button
                               className="btn btn-primary btn-sm"

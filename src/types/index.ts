@@ -37,6 +37,8 @@ export type PrincipalAccountDetail = PrincipalAccount & {
   principalDisplayName: string;
 };
 
+export type Query = Record<string, string | number | boolean>;
+
 export type OkResponse = {
   ok: true;
 };
@@ -192,7 +194,7 @@ export type RequestAssignmentPayload = {
 
 export type AcceptAssignmentRequestsPayload = {
   ids: string[];
-  operation: RequestAssignmentOperation;
+  // operation: RequestAssignmentOperation;
 };
 
 export type RejectAssignmentRequestsPayload = {
@@ -310,6 +312,56 @@ export type UpdatePermissionSetPayload = {
     values: string;
   };
 };
+
+export type GetAssignmentUserRequestFormDataData = {
+  awsAccounts: { id: string; name: string }[];
+  permissionSets: { name: string; arn: string }[];
+  times: number[];
+};
+
+export type CreateAssignmentUserRequestPayload = {
+  awsAccountId: string;
+  permissionSetArn: string;
+  timeInHour: number;
+};
+
+export type ListAssignmentUserRequestsData = {
+  id: string;
+  permissionSetName: string;
+  awsAccountName: string;
+  endAt: string | null;
+  responder: {
+    name: string;
+  } | null;
+  requester: {
+    name: string;
+  };
+  timeInHour: number;
+  status: RequestAssignmentStatus;
+}[];
+
+export type AcceptAssignmentUserRequestPayload = {
+  id: string;
+};
+
+export type RejectAssignmentUserRequestPayload = {
+  id: string;
+};
+
+export type DeleteAssignmentUserRequestPayload = {
+  id: string;
+};
+
+export type ListTimeInHoursData = {
+  creator: {
+    name: string;
+  };
+  timeInHour: number;
+}[];
+
+export type CreateTimeInHourPayload = { timeInHour: number };
+export type DeleteTimeInHourPayload = { timeInHour: number };
+
 export type ListMyPermissionSetsData = {
   principalId: string;
   principalType: PrincipalType;

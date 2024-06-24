@@ -1,8 +1,9 @@
 import { useAuth } from '@/hooks';
 import { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useSearchParams } from 'react-router-dom';
 
 export const RedirectAuthenticated = () => {
+  const [searchParams] = useSearchParams();
   const {
     isLoggedIn,
 
@@ -11,7 +12,12 @@ export const RedirectAuthenticated = () => {
 
   useEffect(() => {
     if (isLoggedIn) {
-      window.location.href = '/';
+      if (searchParams.has('redirect')) {
+        const redirect = searchParams.get('redirect');
+        if (redirect) {
+          window.location.replace(redirect);
+        }
+      } else window.location.href = '/';
     }
   }, [isLoggedIn]);
 

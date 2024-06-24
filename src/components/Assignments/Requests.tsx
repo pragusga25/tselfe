@@ -1,26 +1,136 @@
 import {
   useAcceptAssignmentRequests,
+  useAcceptAssignmentUserRequest,
+  useCreateTimeInHour,
   useDeleteAssignmentRequests,
+  useDeleteAssignmentUserRequest,
+  useDeleteTimeInHour,
   useListAssignmentRequests,
+  useListAssignmentUserRequests,
+  useListTimeInHours,
   useMe,
   useRejectAssignmentRequests,
+  useRejectAssignmentUserRequest,
 } from '@/hooks';
 import { formatDate } from '@/lib/utils';
 import { RequestAssignmentOperation, RequestAssignmentStatus } from '@/types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ModalButton } from '../Modal/ModalButton';
+import { Modal } from '../Modal';
+import { useSearchParams } from 'react-router-dom';
 
 export const AssignmentRequests = () => {
   const { data, isLoading } = useListAssignmentRequests();
   const { data: me, isLoading: meLoading } = useMe();
   const { mutate: accept, isPending: accepting } =
     useAcceptAssignmentRequests();
+
+  const { mutate: acceptUserRequest, isPending: acceptingUserRequest } =
+    useAcceptAssignmentUserRequest();
+
+  const { mutate: rejectUserRequest, isPending: rejectingUserRequest } =
+    useRejectAssignmentUserRequest();
+
+  const { mutate: deleteUserRequest, isPending: deletingUserRequest } =
+    useDeleteAssignmentUserRequest();
+
   const { mutate: reject, isPending: rejecting } =
     useRejectAssignmentRequests();
+
+  const {
+    data: assignmentUserRequestsData,
+    isLoading: isAssignmentUserRequestsFetching,
+  } = useListAssignmentUserRequests();
+
+  const { data: timeInHoursData } = useListTimeInHours();
+  const { mutate: createTimeInHour, isPending: creatingTimeInHour } =
+    useCreateTimeInHour();
+  const { mutate: deleteTimeInHour, isPending: deletingTimeInHour } =
+    useDeleteTimeInHour();
 
   const { mutate: deleteAssignmentRequests, isPending: deleting } =
     useDeleteAssignmentRequests();
 
+  const [timeInHourPayload, setTimeInHourPayload] = useState<number>(1);
+  const [deleteUserReqId, setDeleteUserReqId] = useState('');
+
+  const [searchParams] = useSearchParams();
+  const typeParam = searchParams.get('type');
+  const isInitGroup = typeParam === 'group' || typeParam === 'GROUP';
+  const isInitUser = typeParam === 'user' || typeParam === 'USER';
+
+  const [tab, setTab] = useState(isInitGroup ? 'GROUP' : 'USER');
+  const isGroupTabActive = tab === 'GROUP';
+  const onGroupTab = () => setTab('GROUP');
+  const onUserTab = () => setTab('USER');
+
   const showPage = !!me?.isRoot || !!me?.isApprover;
+
+  const idParam = searchParams.get('id');
+  const actionParam = searchParams.get('action');
+
+  const isAccept = actionParam === 'accept' || actionParam === 'ACCEPT';
+  const isReject = actionParam === 'reject' || actionParam === 'REJECT';
+
+  useEffect(() => {
+    if (
+      idParam &&
+      !isAssignmentUserRequestsFetching &&
+      !isLoading &&
+      typeParam
+    ) {
+      const el = document.getElementById(idParam);
+      if (el) {
+        el.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }
+    }
+  }, [idParam, isAssignmentUserRequestsFetching, isLoading, typeParam]);
+
+  useEffect(() => {
+    if ((me?.isRoot || me?.isApprover) && idParam) {
+      if (isInitGroup && data) {
+        const d = data?.find((d) => d.id === idParam);
+        if (!d || d.status != RequestAssignmentStatus.PENDING) return;
+        if (isAccept) {
+          accept({
+            ids: [idParam],
+          });
+        } else if (isReject) {
+          reject({
+            ids: [idParam],
+          });
+        }
+      }
+    }
+  }, [idParam, actionParam, isAccept, isReject, isInitGroup, data]);
+
+  useEffect(() => {
+    if ((me?.isRoot || me?.isApprover) && idParam) {
+      if (isInitUser && assignmentUserRequestsData) {
+        const d = assignmentUserRequestsData?.find((d) => d.id === idParam);
+        if (!d || d.status != RequestAssignmentStatus.PENDING) return;
+        if (isAccept) {
+          acceptUserRequest({
+            id: idParam,
+          });
+        } else if (isReject) {
+          rejectUserRequest({
+            id: idParam,
+          });
+        }
+      }
+    }
+  }, [
+    idParam,
+    actionParam,
+    isAccept,
+    isReject,
+    isInitUser,
+    assignmentUserRequestsData,
+  ]);
 
   useEffect(() => {
     if (!meLoading && !showPage) {
@@ -44,140 +154,368 @@ export const AssignmentRequests = () => {
     );
   }
   return (
-    <div>
+    <div className="pb-10">
       <h1 className="text-2xl font-bold mb-6">Assignment Requests</h1>
 
-      <div className="overflow-x-auto">
-        <table className="table table-zebra table-sm">
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>Requester</th>
-              <th>Principal</th>
-              <th>Permission Sets</th>
-              <th>Note</th>
-              <th>Operation</th>
-              <th>Status</th>
-              <th>Requested At</th>
-              <th>Responder</th>
-              <th>Responded At</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.map((req, idx) => {
-              let badge = 'badge-warning';
-              let badgeOp = 'badge-accent';
-              const {
-                status,
-                operation,
-                awsAccountName,
-                principalDisplayName,
-              } = req;
-              if (status === RequestAssignmentStatus.ACCEPTED) {
-                badge = 'badge-success';
-              } else if (status === RequestAssignmentStatus.REJECTED) {
-                badge = 'badge-error';
-              }
+      <div className="flex justify-end mb-4">
+        <ModalButton
+          id="createTimeInHour"
+          text="Set Time"
+          className="btn btn-primary"
+        />
 
-              if (operation === RequestAssignmentOperation.ATTACH) {
-                badgeOp = 'badge-info';
-              }
+        <Modal id="createTimeInHour" title="Set Time">
+          <>
+            <form className="w-full">
+              <div className="flex items-center w-full">
+                <label className="input input-bordered flex items-center gap-2">
+                  <input
+                    type="number"
+                    className="grow"
+                    placeholder="Enter time in hours"
+                    value={timeInHourPayload}
+                    onChange={(e) => {
+                      setTimeInHourPayload(Number(e.target.value));
+                    }}
+                  />
+                  <span className="">h</span>
+                </label>
 
-              const ableToDelete =
-                req.status !== RequestAssignmentStatus.PENDING;
+                <button
+                  className="btn btn-primary ml-4"
+                  type="button"
+                  onClick={() => {
+                    createTimeInHour({ timeInHour: timeInHourPayload });
+                  }}
+                  disabled={creatingTimeInHour}
+                >
+                  Add
+                </button>
+              </div>
+            </form>
+            <div className="overflow-x-auto mt-4">
+              <table className="table table-sm">
+                <thead>
+                  <th>Time (in hours)</th>
+                  <th>Creator</th>
+                  <th>Action</th>
+                </thead>
 
-              const { name } = req.requester;
-
-              return (
-                <tr key={req.id}>
-                  <td>{idx + 1}</td>
-                  <td>{name}</td>
-                  <td>
-                    {principalDisplayName} in {awsAccountName} Account
-                  </td>
-                  <td>
-                    {req.permissionSets
-                      .map((ps) => {
-                        if (ps.name) {
-                          return ps.name;
-                        }
-
-                        return ps.arn;
-                      })
-                      .join(', ')}
-                  </td>
-                  <td>{req.note}</td>
-                  <td>
-                    <span className={`badge ${badgeOp} badge-outline`}>
-                      {operation}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`badge ${badge} badge-outline`}>
-                      {status}
-                    </span>
-                  </td>
-                  <td>{formatDate(req.requestedAt)}</td>
-                  <td>{req.responder ? <>{req.responder.name}</> : '-'}</td>
-                  <td>{req.respondedAt ? formatDate(req.respondedAt) : '-'}</td>
-                  <td className="flex flex-col">
-                    {ableToDelete ? (
-                      <button
-                        className="btn btn-error"
-                        onClick={() => {
-                          deleteAssignmentRequests({ ids: [req.id] });
-                        }}
-                        disabled={deleting}
-                      >
-                        {deleting ? (
-                          <span className="loading loading-spinner"></span>
-                        ) : (
-                          'Delete'
-                        )}
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          className="btn btn-success mb-2"
-                          onClick={() =>
-                            accept({ ids: [req.id], operation: req.operation })
-                          }
-                          disabled={accepting}
-                        >
-                          {accepting ? (
-                            <span className="loading loading-spinner"></span>
-                          ) : (
-                            'Accept'
-                          )}
-                        </button>
+                <tbody>
+                  {timeInHoursData?.map(({ timeInHour, creator }) => (
+                    <tr key={timeInHour}>
+                      <td>{timeInHour}</td>
+                      <td>{creator?.name}</td>
+                      <td>
                         <button
                           className="btn btn-error"
-                          onClick={() => reject({ ids: [req.id] })}
-                          disabled={rejecting}
+                          onClick={() => deleteTimeInHour({ timeInHour })}
+                          disabled={deletingTimeInHour}
                         >
-                          {rejecting ? (
-                            <span className="loading loading-spinner"></span>
-                          ) : (
-                            'Reject'
-                          )}
+                          Delete
                         </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        </Modal>
       </div>
-      {(!data || data.length == 0) && !isLoading && (
-        <h3 className="mt-5">No data available.</h3>
+
+      <div role="tablist" className="tabs tabs-boxed my-5">
+        <a
+          role="tab"
+          className={`tab ${isGroupTabActive ? 'tab-active' : ''}`}
+          onClick={onGroupTab}
+        >
+          GROUP
+        </a>
+        <a
+          role="tab"
+          className={`tab ${isGroupTabActive ? '' : 'tab-active'}`}
+          onClick={onUserTab}
+        >
+          USER
+        </a>
+      </div>
+
+      {!isGroupTabActive && (
+        <>
+          <div className="overflow-x-auto">
+            <table className="table table-zebra table-sm">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Requester</th>
+                  <th>Permission Set</th>
+                  <th>AWS Account</th>
+                  <th>Status</th>
+                  <th>Time (in hours)</th>
+                  <th>End At</th>
+                  <th>Responder</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignmentUserRequestsData?.map((req, idx) => {
+                  let badge = 'badge-warning';
+
+                  const { status } = req;
+                  if (status === RequestAssignmentStatus.ACCEPTED) {
+                    badge = 'badge-success';
+                  } else if (status === RequestAssignmentStatus.REJECTED) {
+                    badge = 'badge-error';
+                  }
+
+                  const isPending =
+                    req.status === RequestAssignmentStatus.PENDING;
+
+                  let ableToDelete =
+                    req.status !== RequestAssignmentStatus.PENDING;
+
+                  if (
+                    req.status === RequestAssignmentStatus.ACCEPTED &&
+                    req.endAt &&
+                    new Date() <= new Date(req.endAt)
+                  ) {
+                    ableToDelete = false;
+                  }
+
+                  const { name } = req.requester;
+                  const deletingThisData =
+                    deleteUserReqId === req.id && deletingUserRequest;
+
+                  return (
+                    <tr
+                      key={req.id}
+                      id={req.id}
+                      className={req.id === idParam ? 'text-info' : ''}
+                    >
+                      <td>{idx + 1}</td>
+                      <td>{name}</td>
+                      <td>{req.permissionSetName}</td>
+                      <td>{req.awsAccountName}</td>
+                      <td>
+                        <span className={`badge ${badge} badge-outline`}>
+                          {status}
+                        </span>
+                      </td>
+                      <td>{req.timeInHour}</td>
+                      <td>{req.endAt ? formatDate(req.endAt, true) : '-'}</td>
+                      <td>{req.responder ? <>{req.responder.name}</> : '-'}</td>
+
+                      <td className="flex flex-col">
+                        {isPending && (
+                          <>
+                            <button
+                              className="btn btn-success mb-2"
+                              onClick={() => {
+                                acceptUserRequest({ id: req.id });
+                              }}
+                              disabled={acceptingUserRequest}
+                            >
+                              {acceptingUserRequest ? (
+                                <span className="loading loading-spinner"></span>
+                              ) : (
+                                'Accept'
+                              )}
+                            </button>
+                            <button
+                              className="btn btn-error"
+                              onClick={() => {
+                                rejectUserRequest({ id: req.id });
+                              }}
+                              disabled={rejectingUserRequest}
+                            >
+                              {rejectingUserRequest ? (
+                                <span className="loading loading-spinner"></span>
+                              ) : (
+                                'Reject'
+                              )}
+                            </button>
+                          </>
+                        )}
+                        {ableToDelete && (
+                          <button
+                            className="btn btn-error"
+                            onClick={() => {
+                              setDeleteUserReqId(req.id);
+                              deleteUserRequest({ id: req.id });
+                            }}
+                            disabled={deletingThisData}
+                          >
+                            {deletingThisData ? (
+                              <span className="loading loading-spinner"></span>
+                            ) : (
+                              'Delete'
+                            )}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {(!assignmentUserRequestsData ||
+            assignmentUserRequestsData.length == 0) &&
+            !isAssignmentUserRequestsFetching && (
+              <h3 className="mt-5">No data available.</h3>
+            )}
+          {isAssignmentUserRequestsFetching && (
+            <div className="flex justify-center mt-5">
+              <span className="loading loading-lg"></span>
+            </div>
+          )}
+        </>
       )}
-      {isLoading && (
-        <div className="flex justify-center mt-5">
-          <span className="loading loading-lg"></span>
-        </div>
+
+      {isGroupTabActive && (
+        <>
+          <div className="overflow-x-auto">
+            <table className="table table-zebra table-sm">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Requester</th>
+                  <th>AWS Account/Principal</th>
+                  <th>Permission Sets</th>
+                  <th>Note</th>
+                  <th>Operation</th>
+                  <th>Status</th>
+                  <th>Requested At</th>
+                  <th>Responder</th>
+                  <th>Responded At</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.map((req, idx) => {
+                  let badge = 'badge-warning';
+                  let badgeOp = 'badge-accent';
+                  const {
+                    status,
+                    operation,
+                    awsAccountName,
+                    principalDisplayName,
+                  } = req;
+                  if (status === RequestAssignmentStatus.ACCEPTED) {
+                    badge = 'badge-success';
+                  } else if (status === RequestAssignmentStatus.REJECTED) {
+                    badge = 'badge-error';
+                  }
+
+                  if (operation === RequestAssignmentOperation.ATTACH) {
+                    badgeOp = 'badge-info';
+                  }
+
+                  const ableToDelete =
+                    req.status !== RequestAssignmentStatus.PENDING;
+
+                  const { name } = req.requester;
+                  const principal = `${awsAccountName}/${principalDisplayName}`;
+
+                  return (
+                    <tr
+                      key={req.id}
+                      id={req.id}
+                      className={req.id === idParam ? 'text-info' : ''}
+                    >
+                      <td>{idx + 1}</td>
+                      <td>{name}</td>
+                      <td>{principal}</td>
+                      <td>
+                        {req.permissionSets
+                          .map((ps) => {
+                            if (ps.name) {
+                              return ps.name;
+                            }
+
+                            return ps.arn;
+                          })
+                          .join(', ')}
+                      </td>
+                      <td>{req.note}</td>
+                      <td>
+                        <span className={`badge ${badgeOp} badge-outline`}>
+                          {operation}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${badge} badge-outline`}>
+                          {status}
+                        </span>
+                      </td>
+                      <td>{formatDate(req.requestedAt)}</td>
+                      <td>{req.responder ? <>{req.responder.name}</> : '-'}</td>
+                      <td>
+                        {req.respondedAt ? formatDate(req.respondedAt) : '-'}
+                      </td>
+                      <td className="flex flex-col">
+                        {ableToDelete ? (
+                          <button
+                            className="btn btn-error"
+                            onClick={() => {
+                              deleteAssignmentRequests({ ids: [req.id] });
+                            }}
+                            disabled={deleting}
+                          >
+                            {deleting ? (
+                              <span className="loading loading-spinner"></span>
+                            ) : (
+                              'Delete'
+                            )}
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              className="btn btn-success mb-2"
+                              onClick={() =>
+                                accept({
+                                  ids: [req.id],
+                                  // operation: req.operation,
+                                })
+                              }
+                              disabled={accepting}
+                            >
+                              {accepting ? (
+                                <span className="loading loading-spinner"></span>
+                              ) : (
+                                'Accept'
+                              )}
+                            </button>
+                            <button
+                              className="btn btn-error"
+                              onClick={() => reject({ ids: [req.id] })}
+                              disabled={rejecting}
+                            >
+                              {rejecting ? (
+                                <span className="loading loading-spinner"></span>
+                              ) : (
+                                'Reject'
+                              )}
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {(!data || data.length == 0) && !isLoading && (
+            <h3 className="mt-5">No data available.</h3>
+          )}
+          {isLoading && (
+            <div className="flex justify-center mt-5">
+              <span className="loading loading-lg"></span>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

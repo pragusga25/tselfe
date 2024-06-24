@@ -1,3 +1,4 @@
+import { Query } from '@/types';
 import { AxiosError } from 'axios';
 import toast from 'react-hot-toast';
 
@@ -160,4 +161,11 @@ export const getPsTagsInfo = (tags: Record<string, string>) => {
     isShow,
     isAll,
   };
+};
+
+export const encodeQueryData = (data: Query) => {
+  const ret = [];
+  for (let d in data)
+    ret.push(encodeURIComponent(d) + '=' + encodeURIComponent(data[d]));
+  return ret.join('&');
 };
