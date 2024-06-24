@@ -10,7 +10,6 @@ import { Modal } from '../Modal';
 import {
   CreateFreezeTimePayload,
   FreezeTimeTarget,
-  PermissionSets,
   PrincipalType,
 } from '@/types';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
@@ -27,7 +26,7 @@ export const FreezeTimes = () => {
   } = useCreateFreezeTime();
   const { data: principals } = useListPrincipals();
 
-  const permissionSetOptions: PermissionSets =
+  const permissionSetOptions: { arn: string; name: string }[] =
     permissionSets?.map((p) => ({ arn: p.arn, name: p.name ?? p.arn })) ?? [];
   const isPermissionSetOptionsEmpty = permissionSetOptions.length === 0;
   const [selectedPermissionSets, setSelectedPermissionSets] = useState<

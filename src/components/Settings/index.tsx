@@ -13,7 +13,7 @@ export const Settings = () => {
     onChange: onChangeIdentity,
     onSubmit: onSubmitIdentity,
     isPending: isPendingIdentity,
-    isUpsert: isUpsertIdentity,
+    // isUpsert: isUpsertIdentity,
   } = useUpsertIdentityInstance();
 
   return (

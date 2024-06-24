@@ -11,11 +11,7 @@ import {
   usePushOneAssignment,
 } from '@/hooks';
 import { formatDate } from '@/lib/utils';
-import {
-  CreateAssignmentPayload,
-  PermissionSets,
-  PrincipalType,
-} from '@/types';
+import { CreateAssignmentPayload, PrincipalType } from '@/types';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
