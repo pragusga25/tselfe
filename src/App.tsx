@@ -11,7 +11,7 @@ import { FreezeTimes } from './components/FreezeTimes';
 import { Settings } from './components/Settings';
 import { Role } from './types';
 import { Principals } from './components/Principals';
-import { Logs } from './components/Logs';
+import { Logs } from './components/Logsc';
 import { Approvers } from './components/Approvers';
 import { NotFound } from './components/NotFound';
 import { PermissionSets } from './components/PermissionSets';
