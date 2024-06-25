@@ -47,9 +47,10 @@ export const formatDate = (timestampString: string, withTimes = true) => {
   ];
 
   const date = new Date(timestampString);
-  const day = date.getDate();
-  const monthName = months[date.getMonth()];
-  const year = date.getFullYear();
+  const [month, day, year] = date.toLocaleDateString().split('/');
+  // const day = date.getDate();
+  const monthName = months[Number(month) - 1];
+  // const year = date.getFullYear();
 
   let text = `${day} ${monthName} ${year}`;
 
