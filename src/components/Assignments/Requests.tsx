@@ -55,7 +55,8 @@ export const AssignmentRequests = () => {
   const [deleteUserReqId, setDeleteUserReqId] = useState('');
 
   const [searchParams] = useSearchParams();
-  const typeParam = searchParams.get('type');
+  let typeParam = searchParams.get('type');
+  typeParam = typeParam ?? 'GROUP';
   const isInitGroup = typeParam === 'group' || typeParam === 'GROUP';
   const isInitUser = typeParam === 'user' || typeParam === 'USER';
 
@@ -153,6 +154,7 @@ export const AssignmentRequests = () => {
       </div>
     );
   }
+
   return (
     <div className="pb-10">
       <h1 className="text-2xl font-bold mb-6">Assignment Requests</h1>
