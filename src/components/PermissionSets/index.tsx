@@ -9,7 +9,13 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 export const PermissionSets = () => {
-  const { onSearch, search, data, searchResult: pss } = useListPermissionSets();
+  const {
+    onSearch,
+    search,
+    data,
+    searchResult: pss,
+    isLoading,
+  } = useListPermissionSets();
   const { mutate, isPending, isSuccess } = useUpdatePermissionSet();
   const {
     searchResult: searchResultGroups,
@@ -169,10 +175,18 @@ export const PermissionSets = () => {
             </tr>
           </thead>
           <tbody>
-            {isEmpty && (
+            {isEmpty && !isLoading && (
               <tr>
-                <td colSpan={3} className="text-center">
+                <td colSpan={5} className="text-center">
                   No data available
+                </td>
+              </tr>
+            )}
+
+            {isLoading && (
+              <tr>
+                <td colSpan={5} className="text-center">
+                  <span className="loading loading-spinner loading-md" />
                 </td>
               </tr>
             )}
