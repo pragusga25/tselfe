@@ -89,11 +89,14 @@ export const formatDateId = (timestampString: string, withTimes = true) => {
   let text = `${day} ${monthName} ${year}`;
 
   if (withTimes) {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const hoursPadStr = hours.toString().padStart(2, '0');
-    const minutesPadStr = minutes.toString().padStart(2, '0');
-    text += ` ${hoursPadStr}:${minutesPadStr}`;
+    const [hoursLocal, minutesLoca] = date.toLocaleTimeString().split(':');
+    text += ` ${hoursLocal}:${minutesLoca}`;
+
+    // const hours = date.getHours();
+    // const minutes = date.getMinutes();
+    // const hoursPadStr = hours.toString().padStart(2, '0');
+    // const minutesPadStr = minutes.toString().padStart(2, '0');
+    // text += ` ${hoursPadStr}:${minutesPadStr}`;
   }
 
   return text;
