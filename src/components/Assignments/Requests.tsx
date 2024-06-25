@@ -55,6 +55,7 @@ export const AssignmentRequests = () => {
   const [deleteUserReqId, setDeleteUserReqId] = useState('');
 
   const [searchParams] = useSearchParams();
+  const [actionId, setActionId] = useState('');
   let typeParam = searchParams.get('type');
   typeParam = typeParam ?? 'GROUP';
   const isInitGroup = typeParam === 'group' || typeParam === 'GROUP';
@@ -315,6 +316,7 @@ export const AssignmentRequests = () => {
                               className="btn btn-success mb-2"
                               onClick={() => {
                                 acceptUserRequest({ id: req.id });
+                                setActionId(req.id);
                               }}
                               disabled={acceptingUserRequest}
                             >
@@ -328,6 +330,7 @@ export const AssignmentRequests = () => {
                               className="btn btn-error"
                               onClick={() => {
                                 rejectUserRequest({ id: req.id });
+                                setActionId(req.id);
                               }}
                               disabled={rejectingUserRequest}
                             >
@@ -345,6 +348,7 @@ export const AssignmentRequests = () => {
                             onClick={() => {
                               setDeleteUserReqId(req.id);
                               deleteUserRequest({ id: req.id });
+                              setActionId(req.id);
                             }}
                             disabled={deletingThisData}
                           >
@@ -462,6 +466,7 @@ export const AssignmentRequests = () => {
                             className="btn btn-error"
                             onClick={() => {
                               deleteAssignmentRequests({ ids: [req.id] });
+                              setActionId(req.id);
                             }}
                             disabled={deleting}
                           >
@@ -475,15 +480,16 @@ export const AssignmentRequests = () => {
                           <>
                             <button
                               className="btn btn-success mb-2"
-                              onClick={() =>
+                              onClick={() => {
                                 accept({
                                   ids: [req.id],
                                   // operation: req.operation,
-                                })
-                              }
+                                });
+                                setActionId(req.id);
+                              }}
                               disabled={accepting}
                             >
-                              {accepting ? (
+                              {accepting && actionId === req.id ? (
                                 <span className="loading loading-spinner"></span>
                               ) : (
                                 'Accept'
@@ -491,10 +497,13 @@ export const AssignmentRequests = () => {
                             </button>
                             <button
                               className="btn btn-error"
-                              onClick={() => reject({ ids: [req.id] })}
+                              onClick={() => {
+                                reject({ ids: [req.id] });
+                                setActionId(req.id);
+                              }}
                               disabled={rejecting}
                             >
-                              {rejecting ? (
+                              {rejecting && actionId === req.id ? (
                                 <span className="loading loading-spinner"></span>
                               ) : (
                                 'Reject'
