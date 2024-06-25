@@ -470,7 +470,7 @@ export const AssignmentRequests = () => {
                             }}
                             disabled={deleting}
                           >
-                            {deleting ? (
+                            {deleting && req.id === actionId ? (
                               <span className="loading loading-spinner"></span>
                             ) : (
                               'Delete'
