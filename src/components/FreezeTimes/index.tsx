@@ -7,11 +7,7 @@ import {
 } from '@/hooks';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
-import {
-  CreateFreezeTimePayload,
-  FreezeTimeTarget,
-  PrincipalType,
-} from '@/types';
+import { FreezeTimeTarget, PrincipalType } from '@/types';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { formatDate, getLocaleDateString } from '@/lib/utils';
 
@@ -53,7 +49,7 @@ export const FreezeTimes = () => {
     target: FreezeTimeTarget.GROUP,
   };
 
-  const [payload, setPayload] = useState<CreateFreezeTimePayload>(initPayload);
+  const [payload, setPayload] = useState(initPayload);
 
   const [deleteId, setDeleteId] = useState<string>('');
 
@@ -94,8 +90,10 @@ export const FreezeTimes = () => {
       ...payload,
       permissionSetArns: selectedPermissionSets.map((ps) => ps.arn),
       excludedPrincipals: useExc ? filteredExcludedPrincipals : undefined,
-      startTime: payload.startTime.replace('T', ' '),
-      endTime: payload.endTime.replace('T', ' '),
+      // startTime: payload.startTime.replace('T', ' '),
+      // endTime: payload.endTime.replace('T', ' '),
+      startTime: Math.round(new Date(payload.startTime).getTime() / 1000),
+      endTime: Math.round(new Date(payload.endTime).getTime() / 1000),
     });
   };
 

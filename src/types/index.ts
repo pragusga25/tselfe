@@ -448,8 +448,10 @@ export type CreateFreezeTimePayload = {
   name: string;
   target: FreezeTimeTarget;
   permissionSetArns: string[];
-  startTime: string;
-  endTime: string;
+  // startTime: string;
+  // endTime: string;
+  startTime: number;
+  endTime: number;
   excludedPrincipals?: {
     id: string;
     type: PrincipalType;
