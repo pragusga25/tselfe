@@ -15,6 +15,7 @@ import { Logs } from './components/Logsc';
 import { Approvers } from './components/Approvers';
 import { NotFound } from './components/NotFound';
 import { PermissionSets } from './components/PermissionSets';
+import { PersistLogin } from './components/PersistLogin';
 
 function App() {
   const {
@@ -25,7 +26,13 @@ function App() {
   return (
     <Routes>
       {isAdmin ? (
-        <Route element={<Layout />}>
+        <Route
+          element={
+            <PersistLogin>
+              <Layout />
+            </PersistLogin>
+          }
+        >
           <>
             <Route path="/" element={<Assignments />} />
             <Route path="/assignments" element={<Assignments />} />
@@ -41,7 +48,13 @@ function App() {
         </Route>
       ) : null}
       {!isAdmin ? (
-        <Route element={<Layout />}>
+        <Route
+          element={
+            <PersistLogin>
+              <Layout />
+            </PersistLogin>
+          }
+        >
           <>
             <Route path="/" element={<User />} />
             <Route path="/settings" element={<User />} />
@@ -49,7 +62,7 @@ function App() {
           </>
         </Route>
       ) : null}
-      {/* <RedirectAuthenticated></RedirectAuthenticated> */}
+
       <Route element={<RedirectAuthenticated />}>
         <Route path="/login" element={<Login />} />
       </Route>

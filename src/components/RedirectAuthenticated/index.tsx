@@ -4,21 +4,17 @@ import { Outlet, useSearchParams } from 'react-router-dom';
 
 export const RedirectAuthenticated = () => {
   const [searchParams] = useSearchParams();
-  const {
-    isLoggedIn,
-
-    // isLoading
-  } = useAuth();
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
-    if (isLoggedIn) {
-      if (searchParams.has('redirect')) {
-        const redirect = searchParams.get('redirect');
-        if (redirect) {
-          window.location.replace(redirect);
-        }
-      } else window.location.href = '/';
-    }
+    if (!isLoggedIn) return;
+
+    if (searchParams.has('redirect')) {
+      const redirect = searchParams.get('redirect');
+      if (redirect) {
+        window.location.replace(redirect);
+      }
+    } else window.location.href = '/';
   }, [isLoggedIn]);
 
   if (

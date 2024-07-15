@@ -47,7 +47,6 @@ import {
   Role,
 } from '@/types';
 import { ChangeEvent, useMemo, useState } from 'react';
-import { useMe } from './useUsers';
 
 export const useListAssignments = () => {
   const {
@@ -236,7 +235,9 @@ export const useListMyAssignmentRequests = () => {
 };
 
 export const useListAssignmentRequests = () => {
-  const { data: user } = useMe();
+  const {
+    auth: { user },
+  } = useAuth();
   const {
     auth: { accessToken },
   } = useAuth();
@@ -250,7 +251,9 @@ export const useListAssignmentRequests = () => {
 };
 
 export const useCountAssignmentRequests = () => {
-  const { data: user } = useMe();
+  const {
+    auth: { user },
+  } = useAuth();
   const {
     auth: { accessToken },
   } = useAuth();

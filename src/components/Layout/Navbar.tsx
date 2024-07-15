@@ -1,9 +1,12 @@
-import { useCountAssignmentRequests, useLogout, useMe } from '@/hooks';
+import { useAuth, useCountAssignmentRequests, useLogout } from '@/hooks';
 import { Role } from '@/types';
 import { useMemo } from 'react';
 
 export const Navbar = () => {
-  const { data } = useMe();
+  const {
+    auth: { user: data },
+  } = useAuth();
+
   const menuItems = useMemo(() => {
     const isRoot = !!data?.isRoot;
     const isAdmin = !!(data?.role == Role.ADMIN);

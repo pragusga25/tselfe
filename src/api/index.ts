@@ -108,29 +108,6 @@ export const apiPrivate = axios.create({
   withCredentials: true,
 });
 
-// api.interceptors.response.use(
-//   (response) => {
-//     return response;
-//   },
-//   async function (error) {
-//     const originalRequest = error.config;
-//     console.log('ERROR INTERCEPTOR: ', error);
-//     if (
-//       error.response.status === 401 &&
-//       error.response.data.error.code === 'auth/access-token-expired' &&
-//       !originalRequest._retry
-//     ) {
-//       originalRequest._retry = true;
-//       const response = await apiPrivate.get('/auth.refresh');
-//       console.log('REFRESH RESPONSE: ', response);
-//       const access_token = response.data.result.accessToken;
-//       axios.defaults.headers.common['Authorization'] = 'Bearer ' + access_token;
-//       return api(originalRequest);
-//     }
-//     return Promise.reject(error);
-//   }
-// );
-
 export const listAssignments = (
   accessToken?: string
 ): Promise<ListAssignmentsData> => {

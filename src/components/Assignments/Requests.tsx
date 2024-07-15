@@ -1,6 +1,7 @@
 import {
   useAcceptAssignmentRequests,
   useAcceptAssignmentUserRequest,
+  useAuth,
   useCreateTimeInHour,
   useDeleteAssignmentRequests,
   useDeleteAssignmentUserRequest,
@@ -8,7 +9,6 @@ import {
   useListAssignmentRequests,
   useListAssignmentUserRequests,
   useListTimeInHours,
-  useMe,
   useRejectAssignmentRequests,
   useRejectAssignmentUserRequest,
 } from '@/hooks';
@@ -21,7 +21,9 @@ import { useSearchParams } from 'react-router-dom';
 
 export const AssignmentRequests = () => {
   const { data, isLoading } = useListAssignmentRequests();
-  const { data: me, isLoading: meLoading } = useMe();
+  const {
+    auth: { user },
+  } = useAuth();
   const { mutate: accept, isPending: accepting } =
     useAcceptAssignmentRequests();
 
@@ -66,7 +68,7 @@ export const AssignmentRequests = () => {
   const onGroupTab = () => setTab('GROUP');
   const onUserTab = () => setTab('USER');
 
-  const showPage = !!me?.isRoot || !!me?.isApprover;
+  const showPage = !!user?.isRoot || !!user?.isApprover;
 
   const idParam = searchParams.get('id');
   const actionParam = searchParams.get('action');
@@ -92,7 +94,7 @@ export const AssignmentRequests = () => {
   }, [idParam, isAssignmentUserRequestsFetching, isLoading, typeParam]);
 
   useEffect(() => {
-    if ((me?.isRoot || me?.isApprover) && idParam) {
+    if ((user?.isRoot || user?.isApprover) && idParam) {
       if (isInitGroup && data) {
         const d = data?.find((d) => d.id === idParam);
         if (!d || d.status != RequestAssignmentStatus.PENDING) return;
@@ -110,7 +112,7 @@ export const AssignmentRequests = () => {
   }, [idParam, actionParam, isAccept, isReject, isInitGroup, data]);
 
   useEffect(() => {
-    if ((me?.isRoot || me?.isApprover) && idParam) {
+    if ((user?.isRoot || user?.isApprover) && idParam) {
       if (isInitUser && assignmentUserRequestsData) {
         const d = assignmentUserRequestsData?.find((d) => d.id === idParam);
         if (!d || d.status != RequestAssignmentStatus.PENDING) return;
@@ -135,14 +137,14 @@ export const AssignmentRequests = () => {
   ]);
 
   useEffect(() => {
-    if (!meLoading && !showPage) {
+    if (!showPage) {
       setTimeout(() => {
         window.location.replace('/');
       }, 2000);
     }
-  }, [meLoading, me?.isRoot, me?.isApprover]);
+  }, [user?.isRoot, user?.isApprover]);
 
-  if (meLoading) {
+  if (!showPage) {
     return null;
   }
 

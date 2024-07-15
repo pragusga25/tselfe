@@ -1,37 +1,7 @@
-import { useAuth } from '@/hooks';
 import { Navbar } from './Navbar';
 import { Outlet } from 'react-router-dom';
-import { useEffect } from 'react';
 
 export const Layout = () => {
-  const {
-    isLoggedIn,
-    // isLoading
-  } = useAuth();
-
-  useEffect(() => {
-    if (
-      !isLoggedIn
-      // && !isLoading
-    ) {
-      const { pathname, search } = window.location;
-      window.location.replace(
-        `/login?redirect=${encodeURIComponent(`${pathname}${search}`)}`
-      );
-    }
-  }, [
-    isLoggedIn,
-
-    // isLoading
-  ]);
-
-  if (
-    // isLoading ||
-
-    !isLoggedIn
-  )
-    return null;
-
   return (
     <>
       <Navbar />

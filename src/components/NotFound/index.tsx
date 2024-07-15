@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
 
 export const NotFound = () => {
-  useEffect(() => {
-    setTimeout(() => {
-      window.location.replace('/');
-    }, 2000);
-  }, []);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     window.location.replace('/');
+  //   }, 2000);
+  // }, []);
+
   return (
     <div className="h-screen w-screen flex justify-center items-center px-8">
       <h1>
