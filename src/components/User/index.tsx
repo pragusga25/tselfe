@@ -2,7 +2,6 @@ import {
   useCreateAssignmentUserRequest,
   useDeleteAssignmentRequests,
   useGetAssignmentUserRequestsFormData,
-  useListAssignmentUserRequests,
   useListAwsAccounts,
   useListMyAssignmentRequests,
   useListPermissionSets,
