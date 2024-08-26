@@ -11,6 +11,7 @@ import {
   useRequestAssignment,
   useUpdateUserPassword,
   useDeleteAssignmentUserRequest,
+  useListMyAssignmentUserRequests,
 } from '@/hooks';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
@@ -30,7 +31,8 @@ export const User = () => {
   const { data: ps } = useListPermissionSets();
   const { data: awsAccounts } = useListAwsAccounts();
   const { data: userRequestFormData } = useGetAssignmentUserRequestsFormData();
-  const { data: assignmentUserRequestsData } = useListAssignmentUserRequests();
+  const { data: assignmentUserRequestsData } =
+    useListMyAssignmentUserRequests();
   const [operation, setOperations] = useState(
     RequestAssignmentOperation.ATTACH
   );

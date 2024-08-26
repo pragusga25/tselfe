@@ -571,6 +571,17 @@ export const listAssignmentUserRequests = (
     })
     .then((res) => res.data.result);
 
+export const listMyAssignmentUserRequests = (
+  accessToken?: string
+): Promise<ListAssignmentUserRequestsData> =>
+  api
+    .get(`/assignment-user-requests.my-list`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    .then((res) => res.data.result);
+
 export const requestAssignment = (
   data: RequestAssignmentPayload,
   accessToken?: string

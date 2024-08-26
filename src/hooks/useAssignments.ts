@@ -17,6 +17,7 @@ import {
   listAssignmentUsers,
   listAssignments,
   listMyAssignmentRequests,
+  listMyAssignmentUserRequests,
   listTimeInHours,
   pullAssignments,
   pushAssignments,
@@ -527,11 +528,24 @@ export const useRejectAssignmentUserRequest = () => {
 
 export const useListAssignmentUserRequests = () => {
   const {
-    auth: { accessToken },
+    auth: { accessToken, user },
   } = useAuth();
   const query = useQuery({
     queryKey: ['assignment-user-requests.list'],
     queryFn: () => listAssignmentUserRequests(accessToken),
+    enabled: user?.isApprover || user?.isRoot,
+  });
+
+  return query;
+};
+
+export const useListMyAssignmentUserRequests = () => {
+  const {
+    auth: { accessToken },
+  } = useAuth();
+  const query = useQuery({
+    queryKey: ['assignment-user-requests.my-list'],
+    queryFn: () => listMyAssignmentUserRequests(accessToken),
     enabled: !!accessToken,
   });
 
