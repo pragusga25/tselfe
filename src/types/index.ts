@@ -325,6 +325,7 @@ export type CreateAssignmentUserRequestPayload = {
   awsAccountId: string;
   permissionSetArn: string;
   timeInHour: number;
+  note?: string;
 };
 
 export type ListAssignmentUserRequestsData = {
@@ -333,6 +334,7 @@ export type ListAssignmentUserRequestsData = {
   awsAccountName: string;
   endAt: string | null;
   responderNote: string | null;
+  note: string | null;
   responder: {
     name: string;
   } | null;

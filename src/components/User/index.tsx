@@ -55,13 +55,16 @@ export const User = () => {
     awsAccountId: '',
     permissionSetArn: '',
     timeInHour: -1,
+    note: '',
   };
   const [createUserRequestPayload, setCreateUserRequestPayload] = useState(
     initCreateUserRequestPayload
   );
 
   const onChnageCreateUserRequest = (
-    e: React.ChangeEvent<HTMLSelectElement>
+    e:
+      | React.ChangeEvent<HTMLSelectElement>
+      | React.ChangeEvent<HTMLTextAreaElement>
   ) => {
     const name = e.target.name;
     let value: number | string = e.target.value;
@@ -397,6 +400,19 @@ export const User = () => {
                   </select>
                 </div>
 
+                <div className="form-control">
+                  <div className="label">
+                    <span className="label-text">Note</span>
+                  </div>
+                  <textarea
+                    className="textarea textarea-bordered w-full"
+                    placeholder="Note"
+                    name="note"
+                    value={createUserRequestPayload.note}
+                    onChange={onChnageCreateUserRequest}
+                  ></textarea>
+                </div>
+
                 <button
                   className="btn btn-primary mt-2 w-full"
                   type="button"
@@ -420,6 +436,7 @@ export const User = () => {
                   <th>No.</th>
                   <th>Permission Set</th>
                   <th>AWS Account</th>
+                  <th>Note</th>
                   <th>Time (in hours) / End At</th>
                   <th>Status</th>
                   <th>Responder</th>
@@ -448,6 +465,7 @@ export const User = () => {
                       <td>{idx + 1}</td>
                       <td>{d.permissionSetName}</td>
                       <td>{d.awsAccountName}</td>
+                      <td>{d.note}</td>
                       <td>
                         {d.timeInHour} / {endAt}
                       </td>

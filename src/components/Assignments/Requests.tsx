@@ -292,6 +292,7 @@ export const AssignmentRequests = () => {
                   <th>No.</th>
                   <th>Requester</th>
                   <th>Permission Set</th>
+                  <th>Note</th>
                   <th>AWS Account</th>
                   <th>Status</th>
                   <th>Time (in hours)</th>
@@ -338,6 +339,7 @@ export const AssignmentRequests = () => {
                       <td>{idx + 1}</td>
                       <td>{name}</td>
                       <td>{req.permissionSetName}</td>
+                      <td>{req.note}</td>
                       <td>{req.awsAccountName}</td>
                       <td>
                         <span className={`badge ${badge} badge-outline`}>
