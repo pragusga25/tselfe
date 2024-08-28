@@ -298,6 +298,8 @@ export const AssignmentRequests = () => {
                   <th>Time (in hours)</th>
                   <th>End At</th>
                   <th>Responder</th>
+                  <th>Responder Note</th>
+                  <th>Responded At</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -349,6 +351,7 @@ export const AssignmentRequests = () => {
                       <td>{req.timeInHour}</td>
                       <td>{req.endAt ? formatDate(req.endAt, true) : '-'}</td>
                       <td>{req.responder ? <>{req.responder.name}</> : '-'}</td>
+                      <td>{req.responderNote}</td>
 
                       <td className="flex flex-col">
                         {isPending && (
