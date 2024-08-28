@@ -423,6 +423,7 @@ export const User = () => {
                   <th>Time (in hours) / End At</th>
                   <th>Status</th>
                   <th>Responder</th>
+                  <th>Responder Note</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -431,7 +432,7 @@ export const User = () => {
                 {assignmentUserRequestsData?.map((d, idx) => {
                   let badge = 'badge-warning';
 
-                  const { status } = d;
+                  const { status, responderNote } = d;
                   const ableToDelete =
                     status == RequestAssignmentStatus.PENDING;
                   if (status === RequestAssignmentStatus.ACCEPTED) {
@@ -456,6 +457,7 @@ export const User = () => {
                         </span>
                       </td>
                       <td>{d.responder?.name}</td>
+                      <td>{responderNote}</td>
                       {ableToDelete && (
                         <td>
                           <button
@@ -717,6 +719,7 @@ export const User = () => {
                   <th>Status</th>
                   <th>Requested At</th>
                   <th>Responder</th>
+                  <th>Responder Note</th>
                   <th>Responded At</th>
                   <th>Action</th>
                 </tr>
@@ -758,6 +761,7 @@ export const User = () => {
                       </td>
                       <td>{formatDate(a.requestedAt)}</td>
                       <td>{a.responder ? `${a.responder?.name}` : '-'}</td>
+                      <td>{a.responderNote}</td>
                       <td>{a.respondedAt ? formatDate(a.respondedAt) : '-'}</td>
                       <td>
                         {ableToDelete && (

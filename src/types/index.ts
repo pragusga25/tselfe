@@ -194,11 +194,13 @@ export type RequestAssignmentPayload = {
 
 export type AcceptAssignmentRequestsPayload = {
   ids: string[];
+  responderNote?: string;
   // operation: RequestAssignmentOperation;
 };
 
 export type RejectAssignmentRequestsPayload = {
   ids: string[];
+  responderNote?: string;
 };
 
 export type DeleteAssignmentRequestsPayload = {
@@ -330,6 +332,7 @@ export type ListAssignmentUserRequestsData = {
   permissionSetName: string;
   awsAccountName: string;
   endAt: string | null;
+  responderNote: string | null;
   responder: {
     name: string;
   } | null;
@@ -342,10 +345,12 @@ export type ListAssignmentUserRequestsData = {
 
 export type AcceptAssignmentUserRequestPayload = {
   id: string;
+  responderNote?: string;
 };
 
 export type RejectAssignmentUserRequestPayload = {
   id: string;
+  responderNote?: string;
 };
 
 export type DeleteAssignmentUserRequestPayload = {
@@ -387,6 +392,7 @@ type AssignmentRequestData = {
   note: string | null;
   requestedAt: string;
   respondedAt: string | null;
+  responderNote: string | null;
   responder: {
     name: string;
     username: string;

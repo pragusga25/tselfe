@@ -18,26 +18,23 @@ import { useEffect, useState } from 'react';
 import { ModalButton } from '../Modal/ModalButton';
 import { Modal } from '../Modal';
 import { useSearchParams } from 'react-router-dom';
+import { RespondModal } from '../Modal/RespondModal';
 
 export const AssignmentRequests = () => {
   const { data, isLoading } = useListAssignmentRequests();
   const {
     auth: { user },
   } = useAuth();
-  const { mutate: accept, isPending: accepting } =
-    useAcceptAssignmentRequests();
+  const { mutate: accept } = useAcceptAssignmentRequests();
 
-  const { mutate: acceptUserRequest, isPending: acceptingUserRequest } =
-    useAcceptAssignmentUserRequest();
+  const { mutate: acceptUserRequest } = useAcceptAssignmentUserRequest();
 
-  const { mutate: rejectUserRequest, isPending: rejectingUserRequest } =
-    useRejectAssignmentUserRequest();
+  const { mutate: rejectUserRequest } = useRejectAssignmentUserRequest();
 
   const { mutate: deleteUserRequest, isPending: deletingUserRequest } =
     useDeleteAssignmentUserRequest();
 
-  const { mutate: reject, isPending: rejecting } =
-    useRejectAssignmentRequests();
+  const { mutate: reject } = useRejectAssignmentRequests();
 
   const {
     data: assignmentUserRequestsData,
@@ -65,8 +62,6 @@ export const AssignmentRequests = () => {
 
   const [tab, setTab] = useState(isInitGroup ? 'GROUP' : 'USER');
   const isGroupTabActive = tab === 'GROUP';
-  const onGroupTab = () => setTab('GROUP');
-  const onUserTab = () => setTab('USER');
 
   const showPage = !!user?.isRoot || !!user?.isApprover;
 
@@ -75,6 +70,39 @@ export const AssignmentRequests = () => {
 
   const isAccept = actionParam === 'accept' || actionParam === 'ACCEPT';
   const isReject = actionParam === 'reject' || actionParam === 'REJECT';
+
+  const [respondPayload, setRespondPayload] = useState<{
+    type: 'regular' | 'user';
+    requestId: string;
+  }>({
+    type: 'regular',
+    requestId: '',
+  });
+
+  const [onOpen, setOnOpen] = useState(false);
+
+  const onRespond = (requestId: string) => {
+    setRespondPayload((prev) => ({
+      ...prev,
+      requestId,
+    }));
+    setOnOpen(true);
+  };
+
+  const onGroupTab = () => {
+    setTab('GROUP');
+    setRespondPayload((prev) => ({
+      ...prev,
+      type: 'regular',
+    }));
+  };
+  const onUserTab = () => {
+    setTab('USER');
+    setRespondPayload((prev) => ({
+      ...prev,
+      type: 'user',
+    }));
+  };
 
   useEffect(() => {
     if (
@@ -160,6 +188,13 @@ export const AssignmentRequests = () => {
 
   return (
     <div className="pb-10">
+      <RespondModal
+        isOpen={onOpen}
+        onClose={() => setOnOpen(false)}
+        requestId={respondPayload.requestId}
+        requestType={respondPayload.type}
+        key={respondPayload.requestId}
+      />
       <h1 className="text-2xl font-bold mb-6">Assignment Requests</h1>
 
       <div className="flex justify-end mb-4">
@@ -201,9 +236,11 @@ export const AssignmentRequests = () => {
             <div className="overflow-x-auto mt-4">
               <table className="table table-sm">
                 <thead>
-                  <th>Time (in hours)</th>
-                  <th>Creator</th>
-                  <th>Action</th>
+                  <tr>
+                    <th>Time (in hours)</th>
+                    <th>Creator</th>
+                    <th>Action</th>
+                  </tr>
                 </thead>
 
                 <tbody>
@@ -315,6 +352,14 @@ export const AssignmentRequests = () => {
                         {isPending && (
                           <>
                             <button
+                              className="btn btn-primary mb-2"
+                              onClick={() => {
+                                onRespond(req.id);
+                              }}
+                            >
+                              Respond
+                            </button>
+                            {/* <button
                               className="btn btn-success mb-2"
                               onClick={() => {
                                 acceptUserRequest({ id: req.id });
@@ -341,7 +386,7 @@ export const AssignmentRequests = () => {
                               ) : (
                                 'Reject'
                               )}
-                            </button>
+                            </button> */}
                           </>
                         )}
                         {ableToDelete && (
@@ -396,6 +441,7 @@ export const AssignmentRequests = () => {
                   <th>Status</th>
                   <th>Requested At</th>
                   <th>Responder</th>
+                  <th>Responder Note</th>
                   <th>Responded At</th>
                   <th>Action</th>
                 </tr>
@@ -409,6 +455,7 @@ export const AssignmentRequests = () => {
                     operation,
                     awsAccountName,
                     principalDisplayName,
+                    responderNote,
                   } = req;
                   if (status === RequestAssignmentStatus.ACCEPTED) {
                     badge = 'badge-success';
@@ -459,6 +506,7 @@ export const AssignmentRequests = () => {
                       </td>
                       <td>{formatDate(req.requestedAt)}</td>
                       <td>{req.responder ? <>{req.responder.name}</> : '-'}</td>
+                      <td>{responderNote ? responderNote : '-'}</td>
                       <td>
                         {req.respondedAt ? formatDate(req.respondedAt) : '-'}
                       </td>
@@ -481,6 +529,14 @@ export const AssignmentRequests = () => {
                         ) : (
                           <>
                             <button
+                              className="btn btn-primary mb-2"
+                              onClick={() => {
+                                onRespond(req.id);
+                              }}
+                            >
+                              Respond
+                            </button>
+                            {/* <button
                               className="btn btn-success mb-2"
                               onClick={() => {
                                 accept({
@@ -510,7 +566,7 @@ export const AssignmentRequests = () => {
                               ) : (
                                 'Reject'
                               )}
-                            </button>
+                            </button> */}
                           </>
                         )}
                       </td>
